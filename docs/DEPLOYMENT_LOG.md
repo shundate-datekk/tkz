@@ -346,3 +346,47 @@ vercel --prod
 
 **記録者**: Claude Code
 **最終更新**: 2025-10-20 19:15 JST
+
+---
+
+## 追記: Vercel公式インシデント確認 (2025-10-20 19:30 JST)
+
+### 🚨 Vercel公式インシデント通知
+
+**タイトル**: Elevated errors across multiple services
+
+**影響を受けたサービス**:
+- Routing Middleware
+- Vercel Functions（iad1リージョン）
+- 複数のVercelサービス
+
+**タイムライン（UTC）**:
+```
+07:30 UTC (16:30 JST) - Investigating: 調査開始
+08:03 UTC (17:03 JST) - Identified: iad1リージョンから他リージョンへトラフィック再ルーティング
+08:45 UTC (17:45 JST) - Update: 回復中、CDNトラフィック正常化
+10:16 UTC (19:16 JST) - Update: Routing MiddlewareとVercel Functions（iad1）でまだ失敗の可能性
+```
+
+### ✅ 根本原因確定
+
+**結論**: デプロイ失敗は**Vercelインフラストラクチャのインシデント**が原因でした。
+
+**証拠**:
+1. 公式インシデント通知で「Routing Middleware」と「Vercel Functions」が影響を受けていることを確認
+2. 当アプリケーションはまさにこれらの機能を使用
+3. デプロイ試行タイミング（18:52-19:22 JST）がインシデント継続中の時間帯と一致
+
+**アプリケーション側**:
+- ✅ コード: 問題なし
+- ✅ 環境変数: 正しく設定
+- ✅ ビルド: 成功（ローカル、Vercel両方）
+- ✅ テスト: 全合格
+
+### 📋 次のアクション
+
+**推奨**: 1-2時間待機後（21:00-22:00 JST）に再デプロイ
+
+**理由**: Vercelインシデントの回復を待つ必要がある
+
+**最終更新**: 2025-10-20 19:35 JST
