@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
+import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        {children}
-        <Toaster position="top-center" />
+        <Providers>
+          {children}
+          <Toaster position="top-center" />
+        </Providers>
       </body>
     </html>
   );
