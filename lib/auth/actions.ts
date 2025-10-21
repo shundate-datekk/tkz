@@ -5,9 +5,12 @@ import { AuthError } from "next-auth";
 
 /**
  * ログイン処理
- * NextAuth.js v5（Auth.js）の推奨方法で実装
+ * Next.js 15 + React 19のuseFormStateと互換性のある形式
  */
-export async function login(formData: FormData) {
+export async function login(
+  prevState: { error?: string } | null,
+  formData: FormData
+): Promise<{ error?: string }> {
   console.log('[LOGIN ACTION] Starting login process...');
 
   const username = formData.get("username") as string;
@@ -31,11 +34,12 @@ export async function login(formData: FormData) {
     console.log('[LOGIN ACTION] Calling signIn with FormData...');
 
     // NextAuth.js v5では、signInにFormDataを直接渡すことができる
-    // 認証成功時は自動的にリダイレクトされる（例外がスローされない）
+    // 認証成功時は自動的にリダイレクトされる（REDIRECT errorがスローされる）
     // 認証失敗時はAuthErrorがスローされる
     await signIn("credentials", formData);
 
-    console.log('[LOGIN ACTION] signIn succeeded (this should not be reached if redirected)');
+    console.log('[LOGIN ACTION] signIn succeeded (this line should not be reached)');
+    return {};
   } catch (error) {
     console.error('[LOGIN ACTION] Error caught:', error);
     console.error('[LOGIN ACTION] Error type:', error?.constructor?.name);
@@ -43,6 +47,13 @@ export async function login(formData: FormData) {
       message: error instanceof Error ? error.message : 'Unknown',
       stack: error instanceof Error ? error.stack : undefined
     });
+
+    // Next.js 15では、リダイレクトはREDIRECT errorとしてスローされる
+    // これは正常な動作なので、再スローする
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      console.log('[LOGIN ACTION] Redirect detected (login successful)');
+      throw error;
+    }
 
     if (error instanceof AuthError) {
       console.log('[LOGIN ACTION] AuthError type:', error.type);
@@ -54,7 +65,7 @@ export async function login(formData: FormData) {
       }
     }
 
-    // AuthError以外の例外は再スロー
+    // その他のエラーは再スロー
     throw error;
   }
 }

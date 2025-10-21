@@ -1,45 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { login } from "@/lib/auth/actions";
 
+/**
+ * Submit button component
+ * useFormStatusを使ってフォームの送信状態を取得
+ */
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? "ログイン中..." : "ログイン"}
+    </Button>
+  );
+}
+
 export function LoginForm() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    const formData = new FormData(event.currentTarget);
-
-    try {
-      const result = await login(formData);
-
-      // ログイン成功時は自動的にリダイレクトされるため、
-      // ここに到達するのはエラーがある場合のみ
-      if (result?.error) {
-        setError(result.error);
-        setIsLoading(false);
-        return;
-      }
-
-      // 成功時は自動リダイレクトされるが、念のため明示的にリダイレクト
-      router.push("/");
-      router.refresh();
-    } catch (err) {
-      console.error('[LOGIN FORM] Unexpected error:', err);
-      setError("ログインに失敗しました。もう一度お試しください。");
-      setIsLoading(false);
-    }
-  }
+  // useFormState: Next.js 15 + React 19の推奨方法
+  // formのaction属性に直接Server Actionを設定し、状態を管理
+  const [state, formAction] = useFormState(login, null);
 
   return (
     <Card>
@@ -47,7 +32,7 @@ export function LoginForm() {
         <CardTitle>ログイン</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">ユーザー名</Label>
             <Input
@@ -57,7 +42,6 @@ export function LoginForm() {
               autoComplete="username"
               required
               placeholder="tkz または kobo"
-              disabled={isLoading}
             />
           </div>
 
@@ -70,19 +54,16 @@ export function LoginForm() {
               autoComplete="current-password"
               required
               placeholder="パスワードを入力"
-              disabled={isLoading}
             />
           </div>
 
-          {error && (
+          {state?.error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
+              {state.error}
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "ログイン中..." : "ログイン"}
-          </Button>
+          <SubmitButton />
 
           <div className="mt-4 text-sm text-muted-foreground">
             <p className="text-center">デフォルトのログイン情報:</p>
