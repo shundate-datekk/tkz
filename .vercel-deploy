@@ -4,3 +4,4 @@
 # Fix: Supabase client initialization in auth.config.ts - 2025-10-21 12:30:00
 # Fix: NextAuth.js v5 signIn usage with FormData - 2025-10-21 12:45:00
 # Fix: Use Next.js 15 form action pattern with useFormState - 2025-10-21 13:00:00
+# Migration: Switch to Google OAuth authentication - 2025-10-21 14:45:00

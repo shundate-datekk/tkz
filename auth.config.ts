@@ -1,113 +1,21 @@
 import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/types";
+import Google from "next-auth/providers/google";
 
 /**
  * NextAuth.js 設定
- * Credentials Providerを使用したユーザー名/パスワード認証
+ * Google OAuth認証を使用
  */
 export const authConfig: NextAuthConfig = {
   providers: [
-    Credentials({
-      name: "credentials",
-      credentials: {
-        username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        console.log('[AUTH] Starting authorization...');
-
-        if (!credentials?.username || !credentials?.password) {
-          console.log('[AUTH] Missing credentials');
-          return null;
-        }
-
-        console.log('[AUTH] Credentials received:', {
-          username: credentials.username,
-          passwordLength: (credentials.password as string).length
-        });
-
-        // 環境変数を確認
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-        console.log('[AUTH] Environment check:', {
-          hasUrl: !!supabaseUrl,
-          hasAnonKey: !!supabaseAnonKey,
-          urlPreview: supabaseUrl?.substring(0, 30)
-        });
-
-        if (!supabaseUrl || !supabaseAnonKey) {
-          console.error('[AUTH] Missing Supabase environment variables');
-          return null;
-        }
-
-        // Supabaseクライアントを作成（authorize関数内で作成することで環境変数の読み込みを保証）
-        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-
-        try {
-          // ユーザー情報を取得
-          const { data: user, error } = await supabase
-            .from("users")
-            .select("*")
-            .eq("username", credentials.username as string)
-            .single();
-
-          console.log('[AUTH] Supabase query result:', {
-            found: !!user,
-            error: error?.message,
-            errorDetails: error
-          });
-
-          if (error || !user) {
-            console.log('[AUTH] User not found or query error');
-            return null;
-          }
-
-          // 型アサーション（Supabaseの型が正しく推論されない場合の対処）
-          const userData = user as any;
-
-          console.log('[AUTH] User data retrieved:', {
-            id: userData.id,
-            username: userData.username,
-            displayName: userData.display_name,
-            hasPasswordHash: !!userData.password_hash,
-            hashLength: userData.password_hash?.length,
-            hashPreview: userData.password_hash?.substring(0, 10)
-          });
-
-          // パスワード検証
-          console.log('[AUTH] Starting password verification...');
-          const isValid = await bcrypt.compare(
-            credentials.password as string,
-            userData.password_hash
-          );
-
-          console.log('[AUTH] Password verification result:', {
-            isValid,
-            providedPassword: credentials.password,
-            storedHashPreview: userData.password_hash?.substring(0, 20)
-          });
-
-          if (!isValid) {
-            console.log('[AUTH] Invalid password');
-            return null;
-          }
-
-          console.log('[AUTH] Authentication successful!');
-
-          // 認証成功 - ユーザー情報を返す
-          return {
-            id: userData.id,
-            name: userData.display_name,
-            email: userData.username, // emailフィールドが必須なのでusernameを使用
-          };
-        } catch (error) {
-          console.error("[AUTH] Authentication error:", error);
-          return null;
-        }
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
       },
     }),
   ],
@@ -122,12 +30,16 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
       }
       return session;
     },
