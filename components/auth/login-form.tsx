@@ -23,16 +23,19 @@ export function LoginForm() {
     try {
       const result = await login(formData);
 
+      // ログイン成功時は自動的にリダイレクトされるため、
+      // ここに到達するのはエラーがある場合のみ
       if (result?.error) {
         setError(result.error);
         setIsLoading(false);
         return;
       }
 
-      // ログイン成功 - ホームページにリダイレクト
+      // 成功時は自動リダイレクトされるが、念のため明示的にリダイレクト
       router.push("/");
       router.refresh();
     } catch (err) {
+      console.error('[LOGIN FORM] Unexpected error:', err);
       setError("ログインに失敗しました。もう一度お試しください。");
       setIsLoading(false);
     }
