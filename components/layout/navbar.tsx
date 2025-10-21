@@ -47,15 +47,16 @@ export function Navbar({ userName }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="border-b bg-background">
+    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between gap-4">
           {/* ロゴ */}
           <Link
             href="/"
-            className="text-lg md:text-xl font-bold hover:opacity-80 truncate"
+            className="flex-shrink-0 text-base md:text-xl font-bold hover:opacity-80"
           >
-            AI Tools & Sora Prompt Generator
+            <span className="hidden md:inline">AI Tools & Sora Prompt Generator</span>
+            <span className="md:hidden">AI Tools</span>
           </Link>
 
           {/* デスクトップナビゲーション */}
@@ -84,24 +85,23 @@ export function Navbar({ userName }: NavbarProps) {
           </nav>
 
           {/* デスクトップユーザー情報 */}
-          {userName && (
-            <div className="hidden md:flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
+          <div className="hidden md:flex items-center gap-3">
+            {userName && (
+              <span className="text-sm text-muted-foreground truncate max-w-[150px]">
                 {userName}
               </span>
-              <LogoutButton />
-            </div>
-          )}
+            )}
+            <LogoutButton />
+          </div>
 
           {/* モバイルハンバーガーメニュー */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="メニューを開く">
                 <Menu className="h-6 w-6" />
-                <span className="sr-only">メニューを開く</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px]">
+            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <SheetHeader>
                 <SheetTitle>メニュー</SheetTitle>
               </SheetHeader>
@@ -119,10 +119,10 @@ export function Navbar({ userName }: NavbarProps) {
                         href={item.href}
                         onClick={() => setIsOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent",
+                          "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
                           isActive
                             ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground"
+                            : "text-muted-foreground hover:text-foreground"
                         )}
                       >
                         <Icon className="h-5 w-5" />
@@ -136,9 +136,9 @@ export function Navbar({ userName }: NavbarProps) {
                 {userName && (
                   <div className="mt-4 border-t pt-4">
                     <div className="mb-3 text-sm text-muted-foreground">
-                      ログイン中: {userName}
+                      ログイン中: <span className="font-medium text-foreground">{userName}</span>
                     </div>
-                    <LogoutButton />
+                    <LogoutButton className="w-full" />
                   </div>
                 )}
               </div>
