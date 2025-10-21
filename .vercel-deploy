@@ -1,3 +1,4 @@
 # Deployment trigger
 # Redeploy attempt at 2025-10-20 19:22:16
 # Redeploy attempt after Vercel incident - 2025-10-21 09:47:02
+# Fix: Supabase client initialization in auth.config.ts - 2025-10-21 12:30:00

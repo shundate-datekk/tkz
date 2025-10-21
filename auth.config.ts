@@ -1,7 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 
 /**
  * NextAuth.js 設定
@@ -27,6 +28,24 @@ export const authConfig: NextAuthConfig = {
           username: credentials.username,
           passwordLength: (credentials.password as string).length
         });
+
+        // 環境変数を確認
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        console.log('[AUTH] Environment check:', {
+          hasUrl: !!supabaseUrl,
+          hasAnonKey: !!supabaseAnonKey,
+          urlPreview: supabaseUrl?.substring(0, 30)
+        });
+
+        if (!supabaseUrl || !supabaseAnonKey) {
+          console.error('[AUTH] Missing Supabase environment variables');
+          return null;
+        }
+
+        // Supabaseクライアントを作成（authorize関数内で作成することで環境変数の読み込みを保証）
+        const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
         try {
           // ユーザー情報を取得
