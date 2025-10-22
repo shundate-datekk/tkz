@@ -2,9 +2,10 @@ import OpenAI from "openai";
 
 /**
  * OpenAI APIクライアント設定
+ * APIキーから改行やスペースを除去して正規化
  */
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY?.trim().replace(/\s+/g, ''),
 });
 
 /**
