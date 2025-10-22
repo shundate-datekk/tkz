@@ -6,6 +6,7 @@ import Google from "next-auth/providers/google";
  * Google OAuth認証を使用
  */
 export const authConfig: NextAuthConfig = {
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
