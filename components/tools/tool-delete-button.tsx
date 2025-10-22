@@ -2,117 +2,135 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { deleteToolAction } from "@/lib/actions/ai-tool.actions";
+import { Trash2 } from "lucide-react";
 
 interface ToolDeleteButtonProps {
   toolId: string;
   toolName: string;
+  category?: string;
   isOwner?: boolean;
 }
 
-export function ToolDeleteButton({ toolId, toolName, isOwner = true }: ToolDeleteButtonProps) {
+/**
+ * ツール削除ボタン
+ * 詳細な確認ダイアログとUndo機能付きToast通知
+ */
+export function ToolDeleteButton({ 
+  toolId, 
+  toolName, 
+  category,
+  isOwner = true 
+}: ToolDeleteButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showOwnerConfirm, setShowOwnerConfirm] = useState(false);
 
   function handleDelete() {
-    // 他ユーザーのツールの場合は追加の確認ダイアログを表示
-    if (!isOwner && !showOwnerConfirm) {
-      setShowOwnerConfirm(true);
-      return;
-    }
-
-    // 通常の確認ダイアログを表示
-    if (!showConfirm) {
-      setShowConfirm(true);
-      return;
-    }
-
-    executeDelete();
-  }
-
-  function executeDelete() {
     startTransition(async () => {
       try {
-        const loadingToast = toast.loading("ツールを削除中...");
-
         const result = await deleteToolAction(toolId);
 
-        toast.dismiss(loadingToast);
-
         if (!result.success) {
-          toast.error(result.error);
+          toast.error("削除に失敗しました", {
+            description: result.error,
+          });
           setShowConfirm(false);
-          setShowOwnerConfirm(false);
           return;
         }
 
-        toast.success("ツールを削除しました");
+        // Undo機能付きToast通知（10秒間表示）
+        toast.success("ツールを削除しました", {
+          description: `「${toolName}」を削除しました`,
+          duration: 10000,
+          action: {
+            label: "元に戻す",
+            onClick: async () => {
+              // TODO: 論理削除の復元機能を実装
+              toast.info("元に戻す機能は今後実装予定です");
+            },
+          },
+        });
+
+        setShowConfirm(false);
         router.push("/tools");
         router.refresh();
       } catch (error) {
         console.error("Failed to delete tool:", error);
         toast.error("ツールの削除中にエラーが発生しました");
         setShowConfirm(false);
-        setShowOwnerConfirm(false);
       }
     });
   }
 
-  function handleOwnerConfirm() {
-    setShowOwnerConfirm(false);
-    setShowConfirm(true);
-  }
-
-  function handleCancel() {
-    setShowConfirm(false);
-    setShowOwnerConfirm(false);
-  }
-
   return (
     <>
-      {!showConfirm ? (
-        <Button
-          variant="destructive"
-          onClick={handleDelete}
-          disabled={isPending}
-        >
-          削除
-        </Button>
-      ) : (
-        <div className="flex gap-2">
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            {isPending ? "削除中..." : "本当に削除"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isPending}
-          >
-            キャンセル
-          </Button>
-        </div>
-      )}
-
-      {/* 他ユーザーのツール削除時の確認ダイアログ */}
-      <ConfirmDialog
-        open={showOwnerConfirm}
-        onOpenChange={setShowOwnerConfirm}
-        onConfirm={handleOwnerConfirm}
-        title="他のユーザーのツールを削除"
-        description={`このツール「${toolName}」は他のユーザーが作成したものです。本当に削除してもよろしいですか？`}
-        confirmText="次へ"
-        cancelText="キャンセル"
+      <Button
         variant="destructive"
-      />
+        onClick={() => setShowConfirm(true)}
+        disabled={isPending}
+      >
+        <Trash2 className="mr-2 h-4 w-4" />
+        削除
+      </Button>
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ツールの削除</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>このツールを削除してもよろしいですか？</p>
+                
+                {/* 削除対象のプレビュー */}
+                <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+                  <div>
+                    <span className="text-sm font-medium text-foreground">ツール名:</span>
+                    <p className="mt-1 text-sm text-foreground">{toolName}</p>
+                  </div>
+                  {category && (
+                    <div>
+                      <span className="text-sm font-medium text-foreground">カテゴリー:</span>
+                      <p className="mt-1 text-sm text-foreground">{category}</p>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  この操作は取り消すことができません。
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPending ? "削除中..." : "削除する"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -72,6 +72,7 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
               <ToolDeleteButton
                 toolId={tool.id}
                 toolName={tool.tool_name}
+                category={tool.category}
                 isOwner={isOwner}
               />
             </>

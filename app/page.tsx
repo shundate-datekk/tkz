@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
+import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { Wrench, Plus, Sparkles, History } from "lucide-react";
 import Link from "next/link";
 
@@ -13,7 +14,7 @@ export default async function Home() {
       <Navbar userName={session?.user?.name ?? undefined} />
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-16 pb-24 md:pb-16">
         <div className="flex flex-col items-center justify-center text-center">
           <h1 className="text-4xl font-bold md:text-5xl">
             AI Tools & Sora Prompt Generator
@@ -63,6 +64,9 @@ export default async function Home() {
           )}
         </div>
       </main>
+
+      {/* Bottom Navigation (Mobile Only) */}
+      <BottomNavigation />
     </div>
   );
 }

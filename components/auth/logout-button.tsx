@@ -1,6 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { logout } from "@/lib/auth/actions";
 
 interface LogoutButtonProps {
@@ -20,11 +31,39 @@ export function LogoutButton({
   variant = "ghost",
   className,
 }: LogoutButtonProps) {
+  const [showDialog, setShowDialog] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
-    <form action={logout}>
-      <Button type="submit" variant={variant} className={className}>
+    <>
+      <Button
+        type="button"
+        variant={variant}
+        className={className}
+        onClick={() => setShowDialog(true)}
+      >
         {children}
       </Button>
-    </form>
+
+      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ログアウトの確認</AlertDialogTitle>
+            <AlertDialogDescription>
+              本当にログアウトしますか？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout}>
+              ログアウト
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

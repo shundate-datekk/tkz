@@ -1,20 +1,60 @@
 import * as React from "react";
+import { motion } from "motion/react";
+import { useAnimation } from "@/lib/providers/animation-provider";
 
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
-      className
-    )}
-    {...props}
-  />
-));
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** アニメーション効果を有効にする（ホバー時の浮き上がり）*/
+  animated?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, animated = false, ...props }, ref) => {
+    const { transitionConfig, shouldReduceMotion } = useAnimation();
+
+    // アニメーション有効時
+    if (animated && !shouldReduceMotion) {
+      // motionと競合するHTML属性を除外（型の互換性のため）
+      const { 
+        onDragStart, 
+        onDragEnd, 
+        onDrag,
+        onAnimationStart,
+        onAnimationEnd,
+        ...motionSafeProps 
+      } = props;
+
+      return (
+        <motion.div
+          ref={ref}
+          className={cn(
+            "rounded-xl border bg-card text-card-foreground shadow-md transition-all duration-200",
+            className
+          )}
+          whileHover={{ 
+            y: -4,
+            boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
+          }}
+          transition={{ ...transitionConfig, duration: 0.2 }}
+          {...(motionSafeProps as any)}
+        />
+      );
+    }
+
+    // 通常のカード
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "rounded-xl border bg-card text-card-foreground shadow-md",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<
@@ -36,7 +76,7 @@ const CardTitle = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-xl font-semibold leading-none tracking-tight",
       className
     )}
     {...props}

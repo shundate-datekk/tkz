@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { Home, Wrench, Sparkles, History, Menu } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { CommandMenu } from "@/components/ui/command-menu";
 import {
   Sheet,
   SheetContent,
@@ -86,6 +88,8 @@ export function Navbar({ userName }: NavbarProps) {
 
           {/* デスクトップユーザー情報 */}
           <div className="hidden md:flex items-center gap-3">
+            <CommandMenu />
+            <ThemeToggle />
             {userName && (
               <span className="text-sm text-muted-foreground truncate max-w-[150px]">
                 {userName}
@@ -111,6 +115,11 @@ export function Navbar({ userName }: NavbarProps) {
                 <SheetTitle>メニュー</SheetTitle>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-4">
+                {/* グローバル検索 */}
+                <div className="pb-2 border-b">
+                  <CommandMenu />
+                </div>
+
                 {/* モバイルナビゲーション */}
                 <nav className="flex flex-col gap-2">
                   {navItems.map((item) => {
@@ -136,6 +145,12 @@ export function Navbar({ userName }: NavbarProps) {
                     );
                   })}
                 </nav>
+
+                {/* テーマ切り替え */}
+                <div className="mt-4 border-t pt-4">
+                  <div className="mb-3 text-sm font-medium text-foreground">テーマ</div>
+                  <ThemeToggle className="w-full" />
+                </div>
 
                 {/* モバイルユーザー情報 */}
                 {userName && (

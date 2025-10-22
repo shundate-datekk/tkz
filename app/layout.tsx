@@ -21,6 +21,21 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: "AI Tools & Sora Prompt Generator",
   description: "AIツール情報共有とSora2プロンプト自動生成アプリ",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TKZ",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {

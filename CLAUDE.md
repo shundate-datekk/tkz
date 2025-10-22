@@ -17,6 +17,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 ### Active Specifications
 - `ai-tools-sharing-sora-prompt-generator` - AIツール情報共有とSora2プロンプト自動生成アプリ（TKZ & コボちゃん用）
 - `uiux-comprehensive-improvements` - UIUX包括的改善プロジェクト（レスポンシブ、フィードバック、アクセシビリティ、パフォーマンス）
+- `tkz-uiux-redesign-comprehensive` - **[NEW]** TKZ UIUX大規模リデザインプロジェクト（デザインシステム刷新、堅牢性向上、ユーザーファースト機能追加）
 
 Use `/kiro:spec-status [feature-name]` to check progress.
 
