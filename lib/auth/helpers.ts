@@ -36,6 +36,12 @@ export async function requireAuth() {
  */
 export async function getCurrentUserId(): Promise<string> {
   const user = await requireAuth();
+
+  if (!user.id) {
+    console.error("User ID is missing from session:", user);
+    throw new Error("ユーザーIDが取得できませんでした。再度ログインしてください。");
+  }
+
   return user.id;
 }
 
