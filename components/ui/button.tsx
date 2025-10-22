@@ -3,7 +3,6 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
-import { useAnimation } from "@/lib/providers/animation-provider";
 
 import { cn } from "@/lib/utils";
 
@@ -52,8 +51,6 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, isLoading = false, animated = false, children, disabled, ...props }, ref) => {
-    const { transitionConfig, shouldReduceMotion } = useAnimation();
-
     // asChild使用時はアニメーション無効（Slotは単一の子要素のみ許可）
     if (asChild) {
       return (
@@ -68,7 +65,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     // アニメーション有効時
-    if (animated && !shouldReduceMotion && !disabled) {
+    if (animated && !disabled) {
       // motionと競合するHTML属性を除外（型の互換性のため）
       const { 
         onDragStart, 
@@ -86,7 +83,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           disabled={disabled || isLoading}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          transition={transitionConfig}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           {...(motionSafeProps as any)}
         >
           {isLoading && <Loader2 className="animate-spin" />}

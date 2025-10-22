@@ -1,6 +1,5 @@
 import * as React from "react";
 import { motion } from "motion/react";
-import { useAnimation } from "@/lib/providers/animation-provider";
 
 import { cn } from "@/lib/utils";
 
@@ -11,10 +10,8 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, animated = false, ...props }, ref) => {
-    const { transitionConfig, shouldReduceMotion } = useAnimation();
-
     // アニメーション有効時
-    if (animated && !shouldReduceMotion) {
+    if (animated) {
       // motionと競合するHTML属性を除外（型の互換性のため）
       const { 
         onDragStart, 
@@ -32,11 +29,11 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
             "rounded-xl border bg-card text-card-foreground shadow-md transition-all duration-200",
             className
           )}
-          whileHover={{ 
+          whileHover={{
             y: -4,
             boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
           }}
-          transition={{ ...transitionConfig, duration: 0.2 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
           {...(motionSafeProps as any)}
         />
       );
