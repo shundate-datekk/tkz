@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Loader2, Sparkles, Copy, RefreshCw, Check, Save } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromptForm } from "@/components/prompt/prompt-form";
@@ -24,25 +24,25 @@ export function PromptGenerator() {
         setIsCopied(false);
         setIsSaved(false);
 
-        toast.loading("プロンプトを生成中...", { id: "generate-prompt" });
+        const loadingToast = toast.loading("プロンプトを生成中...");
 
         const result = await generatePromptAction(data);
 
+        toast.dismiss(loadingToast);
+
         if (!result.success) {
-          toast.error(result.error, { id: "generate-prompt" });
+          toast.error(result.error);
           return;
         }
 
-        toast.success("プロンプトを生成しました！", { id: "generate-prompt" });
+        toast.success("プロンプトを生成しました！");
 
         // 生成されたプロンプトと入力パラメータを保存
         setGeneratedPrompt(result.data.promptText);
         setLastInput(data);
       } catch (error) {
         console.error("Failed to generate prompt:", error);
-        toast.error("プロンプトの生成中にエラーが発生しました", {
-          id: "generate-prompt",
-        });
+        toast.error("プロンプトの生成中にエラーが発生しました");
       }
     });
   }
@@ -55,24 +55,24 @@ export function PromptGenerator() {
         setIsCopied(false);
         setIsSaved(false);
 
-        toast.loading("プロンプトを再生成中...", { id: "regenerate-prompt" });
+        const loadingToast = toast.loading("プロンプトを再生成中...");
 
         const result = await regeneratePromptAction(lastInput);
 
+        toast.dismiss(loadingToast);
+
         if (!result.success) {
-          toast.error(result.error, { id: "regenerate-prompt" });
+          toast.error(result.error);
           return;
         }
 
-        toast.success("新しいバリエーションを生成しました！", { id: "regenerate-prompt" });
+        toast.success("新しいバリエーションを生成しました！");
 
         // 再生成されたプロンプトを保存
         setGeneratedPrompt(result.data.promptText);
       } catch (error) {
         console.error("Failed to regenerate prompt:", error);
-        toast.error("プロンプトの再生成中にエラーが発生しました", {
-          id: "regenerate-prompt",
-        });
+        toast.error("プロンプトの再生成中にエラーが発生しました");
       }
     });
   }
@@ -82,22 +82,22 @@ export function PromptGenerator() {
 
     startTransition(async () => {
       try {
-        toast.loading("プロンプトを保存中...", { id: "save-prompt" });
+        const loadingToast = toast.loading("プロンプトを保存中...");
 
         const result = await savePromptHistoryAction(generatedPrompt, lastInput);
 
+        toast.dismiss(loadingToast);
+
         if (!result.success) {
-          toast.error(result.error, { id: "save-prompt" });
+          toast.error(result.error);
           return;
         }
 
-        toast.success("プロンプトを履歴に保存しました！", { id: "save-prompt" });
+        toast.success("プロンプトを履歴に保存しました！");
         setIsSaved(true);
       } catch (error) {
         console.error("Failed to save prompt:", error);
-        toast.error("プロンプトの保存中にエラーが発生しました", {
-          id: "save-prompt",
-        });
+        toast.error("プロンプトの保存中にエラーが発生しました");
       }
     });
   }

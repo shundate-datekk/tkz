@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { deleteToolAction } from "@/lib/actions/ai-tool.actions";
@@ -38,25 +38,25 @@ export function ToolDeleteButton({ toolId, toolName, isOwner = true }: ToolDelet
   function executeDelete() {
     startTransition(async () => {
       try {
-        toast.loading("ツールを削除中...", { id: "delete-tool" });
+        const loadingToast = toast.loading("ツールを削除中...");
 
         const result = await deleteToolAction(toolId);
 
+        toast.dismiss(loadingToast);
+
         if (!result.success) {
-          toast.error(result.error, { id: "delete-tool" });
+          toast.error(result.error);
           setShowConfirm(false);
           setShowOwnerConfirm(false);
           return;
         }
 
-        toast.success("ツールを削除しました", { id: "delete-tool" });
+        toast.success("ツールを削除しました");
         router.push("/tools");
         router.refresh();
       } catch (error) {
         console.error("Failed to delete tool:", error);
-        toast.error("ツールの削除中にエラーが発生しました", {
-          id: "delete-tool",
-        });
+        toast.error("ツールの削除中にエラーが発生しました");
         setShowConfirm(false);
         setShowOwnerConfirm(false);
       }

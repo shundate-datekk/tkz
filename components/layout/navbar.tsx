@@ -71,7 +71,7 @@ export function Navbar({ userName }: NavbarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
+                    "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm",
                     isActive
                       ? "text-primary"
                       : "text-muted-foreground"
@@ -97,11 +97,16 @@ export function Navbar({ userName }: NavbarProps) {
           {/* モバイルハンバーガーメニュー */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" aria-label="メニューを開く">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="メニューを開く"
+                className="min-h-[44px] min-w-[44px]"
+              >
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+            <SheetContent side="right" className="w-[350px]">
               <SheetHeader>
                 <SheetTitle>メニュー</SheetTitle>
               </SheetHeader>
@@ -119,7 +124,7 @@ export function Navbar({ userName }: NavbarProps) {
                         href={item.href}
                         onClick={() => setIsOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                          "flex items-center gap-3 rounded-lg px-3 py-3 min-h-[44px] text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                           isActive
                             ? "bg-accent text-accent-foreground"
                             : "text-muted-foreground hover:text-foreground"

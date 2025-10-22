@@ -1,5 +1,23 @@
 -- Initial database schema for AI Tools & Sora Prompt Generator
 -- Created: 2025-01-20
+-- Last Updated: 2025-10-21
+--
+-- NOTE: 現在の認証方式について
+-- =====================================================================
+-- このプロジェクトは当初Credentials認証（ユーザー名/パスワード）を
+-- 使用する設計でしたが、ログイン問題の解決のため、
+-- Google OAuth認証（NextAuth.js v5）に移行しました。
+--
+-- 重要な影響:
+-- 1. usersテーブルのpassword_hashカラムは使用されていません
+-- 2. RLSポリシーのauth.uid()とauth.role()はSupabase Auth専用の関数であり、
+--    NextAuth.jsでは機能しません
+-- 3. 現在のアクセス制御はアプリケーション層で実装されています
+--
+-- 今後の対応:
+-- - RLSポリシーをNextAuth.jsに適合するように書き換えるか、
+-- - RLSを無効化してアプリケーション層での制御に完全移行することを検討
+-- =====================================================================
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

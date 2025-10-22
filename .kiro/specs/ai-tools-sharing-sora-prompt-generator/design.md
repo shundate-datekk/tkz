@@ -91,15 +91,17 @@ graph TB
 - **トレードオフ**: 外部サービス依存だが、インフラ管理の手間を削減し開発に集中可能
 
 #### Authentication
-- **選定**: NextAuth.js v5 (Auth.js)
+- **選定**: NextAuth.js v5 (Auth.js) + Google OAuth Provider
 - **根拠**:
   - Next.js 15 App Routerとのネイティブ統合
-  - Credentials Providerで独自のユーザー名/パスワード認証を実装
+  - **Google OAuth Providerで安全かつ簡単な認証を実装**（当初はCredentials認証を予定していたが、セキュリティとUX向上のため変更）
   - セッション管理とCSRF保護を自動提供
+  - パスワード管理の負担を削減（パスワードハッシュ、リセット機能が不要）
 - **代替案**:
-  - Supabase Auth: より簡単だが、カスタマイズ性がやや低い
+  - Credentials Provider: パスワードハッシュ保存の問題で実装困難
+  - Supabase Auth: より簡単だが、NextAuth.jsとの統合が複雑
   - 自前実装: セキュリティリスクが高くメンテナンスコスト大
-- **トレードオフ**: 設定の複雑さはあるが、セキュリティと柔軟性を確保
+- **トレードオフ**: Googleアカウントが必須になるが、セキュリティとユーザー体験で大幅に優位
 
 #### AI Service
 - **選定**: OpenAI GPT-4 API
@@ -423,55 +425,49 @@ type PromptError =
 
 #### AuthService
 **Responsibility & Boundaries**
-- **Primary Responsibility**: ユーザー認証とセッション管理
+- **Primary Responsibility**: セッション検証とユーザー情報管理（認証はNextAuth.js + Google OAuthが自動処理）
 - **Domain Boundary**: アプリケーション層（セキュリティ）
-- **Data Ownership**: セッショントークン
-- **Transaction Boundary**: 認証操作
+- **Data Ownership**: セッション情報
+- **Transaction Boundary**: セッション検証操作
 
 **Dependencies**
 - **Inbound**: Server Actions、Middleware
-- **Outbound**: UserRepository（ユーザー情報検証）
-- **External**: NextAuth.js、bcrypt
+- **Outbound**: NextAuth.js（セッション管理）
+- **External**: NextAuth.js、next-auth/react
+
+**注**: Google OAuth認証を使用するため、パスワードハッシュ関連の処理は不要。signInとsignOutはNextAuth.jsの`signIn("google")`と`signOut()`で自動処理。
 
 **Contract Definition**
 
 ```typescript
 interface AuthService {
-  signIn(credentials: SignInCredentials): Promise<Result<SessionUser, AuthError>>;
-  signOut(sessionToken: string): Promise<Result<void, AuthError>>;
-  validateSession(sessionToken: string): Promise<Result<SessionUser, AuthError>>;
-  hashPassword(password: string): Promise<string>;
-  verifyPassword(password: string, hash: string): Promise<boolean>;
+  // セッション検証のみを提供（サインインはNextAuth.jsが自動処理）
+  validateSession(): Promise<Result<SessionUser | null, AuthError>>;
+  getCurrentUser(): Promise<SessionUser | null>;
 }
-
-type SignInCredentials = {
-  username: string; // "TKZ" または "コボちゃん"
-  password: string;
-};
 
 type SessionUser = {
   id: string;
-  username: string;
-  displayName: string;
+  email: string; // Googleアカウントのメールアドレス
+  name: string; // Googleアカウントの表示名
+  image?: string; // Googleプロフィール画像（オプション）
 };
 
 type AuthError =
-  | { type: 'INVALID_CREDENTIALS'; message: string }
   | { type: 'SESSION_EXPIRED'; message: string }
-  | { type: 'USER_NOT_FOUND'; message: string };
+  | { type: 'UNAUTHORIZED'; message: string };
 ```
 
 **Preconditions**:
-- signIn: usernameとpasswordが入力されている
-- validateSession: sessionTokenが存在する
+- validateSession: HTTPリクエストにセッションクッキーが含まれている
 
 **Postconditions**:
-- signIn成功時: セッションがDBに保存され、クッキーにトークンが設定される
-- signOut: セッションがDBから削除され、クッキーがクリアされる
+- validateSession: 有効なセッションが存在する場合、SessionUserを返す
 
 **Invariants**:
-- パスワードはbcryptでハッシュ化され平文保存されない
+- セッションはJWTまたはデータベースセッションで管理（NextAuth.js設定に依存）
 - セッションには有効期限（24時間）が設定される
+- Googleアカウント情報はNextAuth.jsが自動的に検証
 
 ### Data Access Layer
 
@@ -609,16 +605,18 @@ type VideoPromptInput = {
 
 #### usersテーブル
 ```sql
+-- NOTE: Google OAuth認証に移行したため、password_hashカラムは使用されていません
+-- 当初Credentials認証を予定していたため、このカラムが残っています
+-- 将来的にスキーマクリーンアップ時に削除を検討
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username VARCHAR(50) UNIQUE NOT NULL, -- "TKZ" または "コボちゃん"
-  display_name VARCHAR(100) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
+  username VARCHAR(50) UNIQUE NOT NULL, -- Googleアカウントのメールアドレスまたは識別子
+  display_name VARCHAR(100) NOT NULL, -- Googleアカウントの表示名
+  password_hash VARCHAR(255) NOT NULL, -- ⚠️ 使用していない（Google OAuth認証のため）
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- usernameは "TKZ" と "コボちゃん" の2つのみ
 CREATE INDEX idx_users_username ON users(username);
 ```
 
@@ -889,10 +887,10 @@ type HealthResponse = {
    - 異常系: OpenAI APIエラー時にリトライが発動
    - モック: OpenAIClient をモック化してAPI呼び出しをシミュレート
 
-3. **AuthService.signIn()**
-   - 正常系: 正しいユーザー名とパスワードでセッションが作成される
-   - 異常系: 誤ったパスワードでINVALID_CREDENTIALSエラー
-   - セキュリティ: パスワードがハッシュ化されて検証される
+3. **AuthService.validateSession()**
+   - 正常系: 有効なセッショントークンでSessionUserが返される
+   - 異常系: 期限切れセッションでSESSION_EXPIREDエラー
+   - セキュリティ: NextAuth.jsによるトークン検証
 
 4. **SearchService.searchTools()**
    - 正常系: キーワードが含まれるツールが返される
@@ -1009,15 +1007,24 @@ type HealthResponse = {
 ### Authentication & Authorization
 
 #### 認証フロー
-- **セッションベース認証**: NextAuth.js v5を使用
+- **OAuth認証**: Google OAuth 2.0を使用（NextAuth.js v5経由）
+- **セッション管理**: NextAuth.js v5のJWTセッション戦略を使用
 - **セッション有効期限**: 24時間
 - **自動延長**: アクティブな操作時に自動的にセッションを延長
 - **ログアウト**: 明示的なログアウト時にセッションを無効化
+- **認証フロー**:
+  1. ユーザーが「Googleでログイン」ボタンをクリック
+  2. Google OAuth同意画面にリダイレクト
+  3. ユーザーがGoogleアカウントで認証
+  4. Googleからコールバックを受け取り
+  5. NextAuth.jsがセッションを作成
+  6. アプリケーションのメイン画面にリダイレクト
 
-#### パスワードセキュリティ
-- **ハッシュアルゴリズム**: bcrypt (cost factor = 12)
-- **パスワード要件**: 最低8文字、英数字を含む（初期設定では固定、将来的に変更可能）
-- **パスワードリセット**: MVP段階では管理者（開発者）による手動リセット
+#### OAuth認証のセキュリティ
+- **認証プロバイダー**: Googleの強固なセキュリティ基盤を利用
+- **パスワード管理**: 不要（Googleが管理）
+- **アクセストークン**: Google OAuthフローで自動的に取得・検証
+- **アカウント制限**: 環境変数で許可されたGoogleアカウント（TKZ、コボちゃんのメールアドレス）を制限可能（将来実装）
 
 #### アクセス制御
 - **Middleware**: すべての保護されたルートでセッション検証
@@ -1037,9 +1044,10 @@ type HealthResponse = {
 - **ローテーション**: 3ヶ月ごとにAPIキーをローテーション
 
 #### 個人情報保護
-- **収集データ**: ユーザー名、パスワード（ハッシュ化）、AIツール情報、プロンプト履歴
+- **収集データ**: Googleアカウント情報（メールアドレス、表示名、プロフィール画像）、AIツール情報、プロンプト履歴
 - **データ保持**: ユーザーが削除するまで保持（論理削除）
 - **データエクスポート**: ユーザーリクエストに応じてJSON形式でエクスポート可能
+- **OAuth同意**: Google OAuth同意画面でユーザーが明示的に同意した情報のみを収集
 
 ### CSRF & XSS Protection
 

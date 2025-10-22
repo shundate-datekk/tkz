@@ -1,8 +1,20 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
+import dynamic from "next/dynamic";
 import { auth } from "@/auth";
 import { Navbar } from "@/components/layout/navbar";
-import { PromptGenerator } from "@/components/prompt/prompt-generator";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const PromptGenerator = dynamic(
+  () => import("@/components/prompt/prompt-generator").then((mod) => ({ default: mod.PromptGenerator })),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    ),
+  }
+);
 
 export const metadata: Metadata = {
   title: "Sora2プロンプト生成 | AI Tools & Sora Prompt Generator",
@@ -20,8 +32,7 @@ export default async function PromptPage() {
     <div className="min-h-screen bg-background">
       <Navbar userName={session.user.name ?? undefined} />
 
-      {/* Main Content */}
-      <div className="container mx-auto max-w-3xl px-4 py-8">
+      <main className="container mx-auto max-w-3xl px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Sora2プロンプト生成</h1>
           <p className="mt-2 text-muted-foreground">
@@ -30,7 +41,7 @@ export default async function PromptPage() {
         </div>
 
         <PromptGenerator />
-      </div>
+      </main>
     </div>
   );
 }

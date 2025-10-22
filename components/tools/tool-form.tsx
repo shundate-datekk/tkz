@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { TextareaWithCounter } from "@/components/ui/textarea-with-counter";
 import {
   Select,
   SelectContent,
@@ -44,6 +44,7 @@ export function ToolForm({
 }: ToolFormProps) {
   const form = useForm<CreateAIToolInput>({
     resolver: zodResolver(createAiToolSchema),
+    mode: "onBlur", // フォーカス離脱時にバリデーション
     defaultValues: defaultValues || {
       tool_name: "",
       category: "",
@@ -54,9 +55,28 @@ export function ToolForm({
     },
   });
 
+  // 外部のisLoadingと内部のisSubmittingの両方を考慮
+  const isFormDisabled = isLoading || form.formState.isSubmitting;
+
+  // エラー時に最初のエラーフィールドにフォーカス&スクロール
+  const handleFormError = () => {
+    const firstError = Object.keys(form.formState.errors)[0];
+    if (firstError) {
+      form.setFocus(firstError as keyof CreateAIToolInput);
+
+      // エラーフィールドまでスクロール
+      setTimeout(() => {
+        const errorElement = document.querySelector(`[name="${firstError}"]`);
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit, handleFormError)} className="space-y-6">
         {/* ツール名 */}
         <FormField
           control={form.control}
@@ -68,7 +88,7 @@ export function ToolForm({
                 <Input
                   placeholder="ChatGPT, Midjourney, GitHub Copilot など"
                   {...field}
-                  disabled={isLoading}
+                  disabled={isFormDisabled}
                 />
               </FormControl>
               <FormDescription>
@@ -89,7 +109,7 @@ export function ToolForm({
               <Select
                 onValueChange={field.onChange}
                 defaultValue={field.value}
-                disabled={isLoading}
+                disabled={isFormDisabled}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -120,11 +140,12 @@ export function ToolForm({
             <FormItem>
               <FormLabel>使用目的 *</FormLabel>
               <FormControl>
-                <Textarea
+                <TextareaWithCounter
                   placeholder="例: ブログ記事の下書き作成、プログラミングの補助、画像生成など"
                   className="min-h-[100px]"
+                  maxLength={2000}
                   {...field}
-                  disabled={isLoading}
+                  disabled={isFormDisabled}
                 />
               </FormControl>
               <FormDescription>
@@ -143,11 +164,12 @@ export function ToolForm({
             <FormItem>
               <FormLabel>使用感 *</FormLabel>
               <FormControl>
-                <Textarea
+                <TextareaWithCounter
                   placeholder="例: 操作が簡単で初心者でも使いやすい、出力品質が高い、レスポンスが速いなど"
                   className="min-h-[100px]"
+                  maxLength={2000}
                   {...field}
-                  disabled={isLoading}
+                  disabled={isFormDisabled}
                 />
               </FormControl>
               <FormDescription>
@@ -168,7 +190,7 @@ export function ToolForm({
               <Select
                 onValueChange={(value) => field.onChange(Number(value))}
                 defaultValue={String(field.value)}
-                disabled={isLoading}
+                disabled={isFormDisabled}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -199,7 +221,7 @@ export function ToolForm({
             <FormItem>
               <FormLabel>使用日 *</FormLabel>
               <FormControl>
-                <Input type="date" {...field} disabled={isLoading} />
+                <Input type="date" {...field} disabled={isFormDisabled} />
               </FormControl>
               <FormDescription>
                 このツールを使用した日付を選択してください
@@ -209,8 +231,8 @@ export function ToolForm({
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? loadingText : submitButtonText}
+        <Button type="submit" className="w-full" isLoading={isFormDisabled} disabled={isFormDisabled}>
+          {isFormDisabled ? loadingText : submitButtonText}
         </Button>
       </form>
     </Form>

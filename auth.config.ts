@@ -27,19 +27,24 @@ export const authConfig: NextAuthConfig = {
     maxAge: 24 * 60 * 60, // 24時間
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // 初回ログイン時: userオブジェクトからIDを取得
       if (user) {
-        token.id = user.id;
+        // Google OAuthの場合、user.idはGoogle account IDになる
+        token.id = user.id || account?.providerAccountId;
         token.email = user.email;
         token.name = user.name;
+        token.picture = user.image;
       }
       return token;
     },
     async session({ session, token }) {
+      // セッションにユーザー情報を設定
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
+        session.user.image = token.picture as string | undefined;
       }
       return session;
     },

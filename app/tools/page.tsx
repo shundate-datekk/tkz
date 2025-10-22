@@ -47,8 +47,7 @@ export default async function ToolsPage() {
     <div className="min-h-screen bg-background">
       <Navbar userName={session.user.name ?? undefined} />
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">AIツール一覧</h1>
@@ -63,7 +62,7 @@ export default async function ToolsPage() {
           userMap={userMap}
           currentUserId={session.user.id}
         />
-      </div>
+      </main>
     </div>
   );
 }

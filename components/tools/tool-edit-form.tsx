@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,25 +38,25 @@ export function ToolEditForm({ tool, isOwner }: ToolEditFormProps) {
   function executeUpdate(data: CreateAIToolInput) {
     startTransition(async () => {
       try {
-        toast.loading("ツールを更新中...", { id: "update-tool" });
+        const loadingToast = toast.loading("ツールを更新中...");
 
         const result = await updateToolAction(tool.id, data);
 
+        toast.dismiss(loadingToast);
+
         if (!result.success) {
-          toast.error(result.error, { id: "update-tool" });
+          toast.error(result.error);
           return;
         }
 
-        toast.success("ツールを更新しました！", { id: "update-tool" });
+        toast.success("ツールを更新しました！");
 
         // 詳細ページにリダイレクト
         router.push(`/tools/${tool.id}`);
         router.refresh();
       } catch (error) {
         console.error("Failed to update tool:", error);
-        toast.error("ツールの更新中にエラーが発生しました", {
-          id: "update-tool",
-        });
+        toast.error("ツールの更新中にエラーが発生しました");
       }
     });
   }

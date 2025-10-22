@@ -45,14 +45,13 @@ export default async function HistoryPage() {
     <div className="min-h-screen bg-background">
       <Navbar userName={session.user.name ?? undefined} />
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">プロンプト履歴</h1>
         </div>
 
         <PromptHistoryList histories={histories} userMap={userMap} />
-      </div>
+      </main>
     </div>
   );
 }

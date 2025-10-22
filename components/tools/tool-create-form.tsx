@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ToolForm } from "@/components/tools/tool-form";
 import { createToolAction } from "@/lib/actions/ai-tool.actions";
 import type { CreateAIToolInput } from "@/lib/schemas/ai-tool.schema";
@@ -16,26 +16,27 @@ export function ToolCreateForm() {
     startTransition(async () => {
       try {
         // Optimistic UI: フォームをすぐに無効化してフィードバック
-        toast.loading("ツールを登録中...", { id: "create-tool" });
+        const loadingToast = toast.loading("ツールを登録中...");
 
         const result = await createToolAction(data);
 
+        // ローディングトーストを削除
+        toast.dismiss(loadingToast);
+
         if (!result.success) {
-          toast.error(result.error, { id: "create-tool" });
+          toast.error(result.error);
           return;
         }
 
         // 成功
-        toast.success("ツールを登録しました！", { id: "create-tool" });
+        toast.success("ツールを登録しました！");
 
         // ツール一覧ページにリダイレクト
         router.push("/tools");
         router.refresh();
       } catch (error) {
         console.error("Failed to create tool:", error);
-        toast.error("ツールの登録中にエラーが発生しました", {
-          id: "create-tool",
-        });
+        toast.error("ツールの登録中にエラーが発生しました");
       }
     });
   }
