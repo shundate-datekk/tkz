@@ -30,6 +30,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@serwist/next": "^9.2.1",
     "@serwist/webpack-plugin": "^9.2.1",
+    "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.75.1",
     "@types/node": "^24.8.1",
     "@types/react": "^19.2.2",

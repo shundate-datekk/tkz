@@ -132,9 +132,74 @@ export interface Database {
           updated_at?: string;
         };
       };
+      tags: {
+        Row: {
+          id: string;
+          name: string;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          created_at?: string;
+          created_by: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          created_at?: string;
+          created_by?: string;
+        };
+      };
+      tool_tags: {
+        Row: {
+          id: string;
+          tool_id: string;
+          tag_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tool_id: string;
+          tag_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tool_id?: string;
+          tag_id?: string;
+          created_at?: string;
+        };
+      };
+      likes: {
+        Row: {
+          id: string;
+          tool_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tool_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tool_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+      };
     };
     Views: {
-      [_ in never]: never;
+      tool_like_counts: {
+        Row: {
+          tool_id: string;
+          like_count: number;
+        };
+      };
     };
     Functions: {
       [_ in never]: never;

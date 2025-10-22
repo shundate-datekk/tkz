@@ -10,15 +10,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LikeButton } from "@/components/tools/like-button";
+import { likeToolAction, unlikeToolAction } from "@/lib/actions/like.actions";
 import type { AITool } from "@/lib/schemas/ai-tool.schema";
 
 interface ToolCardProps {
   tool: AITool;
   userName: string;
   currentUserId: string;
+  likeCount?: number;
+  userHasLiked?: boolean;
 }
 
-export function ToolCard({ tool, userName, currentUserId }: ToolCardProps) {
+export function ToolCard({ 
+  tool, 
+  userName, 
+  currentUserId,
+  likeCount = 0,
+  userHasLiked = false,
+}: ToolCardProps) {
   const isOwner = tool.created_by === currentUserId;
 
   // 星評価を表示
@@ -71,12 +81,17 @@ export function ToolCard({ tool, userName, currentUserId }: ToolCardProps) {
           </span>
         </div>
 
-        <div className="flex w-full gap-2">
+        <div className="flex w-full items-center gap-2">
+          <LikeButton
+            toolId={tool.id}
+            initialLikeCount={likeCount}
+            initialUserHasLiked={userHasLiked}
+          />
           <Button asChild variant="outline" size="sm" className="flex-1">
             <Link href={`/tools/${tool.id}`}>詳細</Link>
           </Button>
           {isOwner && (
-            <Button asChild variant="secondary" size="sm" className="flex-1">
+            <Button asChild variant="secondary" size="sm">
               <Link href={`/tools/${tool.id}/edit`}>編集</Link>
             </Button>
           )}
