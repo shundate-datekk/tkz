@@ -1,10 +1,15 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthErrorMessage } from "./auth-error-message";
 
 export function LoginForm() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
   const handleGoogleSignIn = () => {
     signIn("google", { callbackUrl: "/" });
   };
@@ -15,6 +20,8 @@ export function LoginForm() {
         <CardTitle>ログイン</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <AuthErrorMessage error={error} />
+
         <p className="text-sm text-muted-foreground text-center">
           Googleアカウントでログインしてください
         </p>
