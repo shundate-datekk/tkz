@@ -230,6 +230,80 @@ export class AIToolRepository {
   }
 
   /**
+   * 論理削除されたツールを取得（30日以内）
+   */
+  async findDeletedTools(userId: string): Promise<AITool[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const { data, error } = await supabase
+      .from("ai_tools")
+      .select("*")
+      .eq("created_by", userId)
+      .not("deleted_at", "is", null)
+      .gte("deleted_at", thirtyDaysAgo.toISOString())
+      .order("deleted_at", { ascending: false });
+
+    if (error || !data) {
+      console.error("Failed to fetch deleted AI tools:", error);
+      return [];
+    }
+
+    return data as any;
+  }
+
+  /**
+   * 論理削除されたツールを復元
+   */
+  async restore(id: string, userId: string): Promise<AITool | null> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // 30日以内に削除され、かつ所有者が一致するツールのみ復元可能
+    const { data, error } = await (supabase as any)
+      .from("ai_tools")
+      .update({
+        deleted_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .eq("created_by", userId)
+      .not("deleted_at", "is", null)
+      .gte("deleted_at", thirtyDaysAgo.toISOString())
+      .select()
+      .single();
+
+    if (error || !data) {
+      console.error("Failed to restore AI tool:", error);
+      return null;
+    }
+
+    return data as any;
+  }
+
+  /**
+   * 指定日数より古い論理削除されたツールを物理削除
+   */
+  async cleanupOldDeletedTools(days: number = 30): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from("ai_tools")
+      .delete()
+      .not("deleted_at", "is", null)
+      .lt("deleted_at", cutoffDate.toISOString())
+      .select();
+
+    if (error) {
+      console.error("Failed to cleanup old deleted AI tools:", error);
+      return 0;
+    }
+
+    return data?.length ?? 0;
+  }
+
+  /**
    * AIツールを物理削除（管理用）
    */
   async hardDelete(id: string): Promise<boolean> {

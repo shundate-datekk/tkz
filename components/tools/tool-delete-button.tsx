@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteToolAction } from "@/lib/actions/ai-tool.actions";
+import { deleteToolAction, restoreToolAction } from "@/lib/actions/ai-tool.actions";
 import { Trash2 } from "lucide-react";
 
 interface ToolDeleteButtonProps {
@@ -58,8 +58,25 @@ export function ToolDeleteButton({
           action: {
             label: "元に戻す",
             onClick: async () => {
-              // TODO: 論理削除の復元機能を実装
-              toast.info("元に戻す機能は今後実装予定です");
+              try {
+                const restoreResult = await restoreToolAction(toolId);
+                
+                if (!restoreResult.success) {
+                  toast.error("復元に失敗しました", {
+                    description: restoreResult.error,
+                  });
+                  return;
+                }
+                
+                toast.success("ツールを復元しました", {
+                  description: `「${toolName}」を復元しました`,
+                });
+                
+                router.refresh();
+              } catch (error) {
+                console.error("Failed to restore tool:", error);
+                toast.error("ツールの復元中にエラーが発生しました");
+              }
             },
           },
         });
@@ -109,7 +126,7 @@ export function ToolDeleteButton({
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  この操作は取り消すことができません。
+                  削除後10秒間、または30日以内であれば復元できます。30日を過ぎると自動的に完全削除されます。
                 </p>
               </div>
             </AlertDialogDescription>

@@ -117,3 +117,67 @@ export async function deleteToolAction(
     };
   }
 }
+
+/**
+ * 論理削除されたツールを取得（30日以内）
+ */
+export async function getDeletedToolsAction(): Promise<
+  ActionResult<any[]>
+> {
+  try {
+    const userId = await getCurrentUserId();
+    const result = await aiToolService.getDeletedTools(userId);
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error("Failed to get deleted tools:", error);
+    return {
+      success: false,
+      error: "削除されたツールの取得中にエラーが発生しました",
+    };
+  }
+}
+
+/**
+ * 論理削除されたツールを復元
+ */
+export async function restoreToolAction(
+  id: string
+): Promise<ActionResult<void>> {
+  try {
+    const userId = await getCurrentUserId();
+    const result = await aiToolService.restoreTool(id, userId);
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    // ツール一覧ページをキャッシュ再検証
+    revalidatePath("/tools");
+    revalidatePath(`/tools/${id}`);
+
+    return {
+      success: true,
+      data: undefined,
+    };
+  } catch (error) {
+    console.error("Failed to restore tool:", error);
+    return {
+      success: false,
+      error: "ツールの復元中にエラーが発生しました",
+    };
+  }
+}

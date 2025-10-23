@@ -219,6 +219,64 @@ export class AIToolService {
   }
 
   /**
+   * 論理削除されたツールを取得（30日以内）
+   */
+  async getDeletedTools(userId: string): Promise<Result<AITool[], AppError>> {
+    try {
+      const tools = await aiToolRepository.findDeletedTools(userId);
+      return success(tools);
+    } catch (error) {
+      console.error("Failed to get deleted AI tools:", error);
+      return failure(
+        serverError("削除されたツール一覧の取得中にエラーが発生しました")
+      );
+    }
+  }
+
+  /**
+   * 論理削除されたツールを復元
+   */
+  async restoreTool(
+    id: string,
+    userId: string
+  ): Promise<Result<AITool, AppError>> {
+    try {
+      // 復元を試みる
+      const restoredTool = await aiToolRepository.restore(id, userId);
+
+      if (!restoredTool) {
+        return failure(
+          notFoundError(
+            "復元可能なツールが見つかりません。30日以上経過したツールは復元できません。"
+          )
+        );
+      }
+
+      return success(restoredTool);
+    } catch (error) {
+      console.error("Failed to restore AI tool:", error);
+      return failure(serverError("ツールの復元中にエラーが発生しました"));
+    }
+  }
+
+  /**
+   * 30日以上前に削除されたツールを自動クリーンアップ
+   */
+  async cleanupOldDeletedTools(): Promise<
+    Result<{ count: number }, AppError>
+  > {
+    try {
+      const count = await aiToolRepository.cleanupOldDeletedTools(30);
+      return success({ count });
+    } catch (error) {
+      console.error("Failed to cleanup old deleted AI tools:", error);
+      return failure(
+        serverError("古い削除ツールのクリーンアップ中にエラーが発生しました")
+      );
+    }
+  }
+
+  /**
    * カテゴリ別の統計を取得
    */
   async getCategoryStats(): Promise<
