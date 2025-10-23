@@ -94,7 +94,7 @@
   - 右下に配置するレイアウトを実装する
   - _Requirements: 5.8, 1.7_
 
-- [ ] 5.4 DatePickerコンポーネントを追加する
+- [x] 5.4 DatePickerコンポーネントを追加する
   - カレンダーUIで直感的に選択できるDatePickerを実装する
   - 日付範囲選択機能を追加する（検索用）
   - _Requirements: 5.9_
