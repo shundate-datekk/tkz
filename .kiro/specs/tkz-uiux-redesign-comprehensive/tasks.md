@@ -37,7 +37,7 @@
   - 既存のServer Actionsと統合するfetcher関数を作成する
   - _Requirements: 14.3_
 
-- [ ] 2.3 PWA対応のための@serwist/nextをインストールする
+- [x] 2.3 PWA対応のための@serwist/nextをインストールする
   - @serwist/next と @serwist/webpack-plugin をインストールする
   - next.config.tsでSerwist設定を追加する
   - Service Worker設定ファイル（app/sw.ts）を作成する
