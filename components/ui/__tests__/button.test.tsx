@@ -1,175 +1,253 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { userEvent } from '@testing-library/user-event';
 import { Button } from '../button';
-import { AnimationProvider } from '@/lib/providers/animation-provider';
-import { Mail } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 /**
  * Buttonコンポーネントのテスト
- *
- * グラデーションスタイル、サイズバリエーション、
- * アイコン＋テキストレイアウトを検証します。
- *
- * Requirements: 5.1, 5.2, 5.3
+ * 
+ * Requirements: 5.1, 5.2, 5.3, 8.2, 8.6
  */
+
 describe('Button', () => {
-  beforeEach(() => {
-    // matchMedia をモック
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: vi.fn().mockImplementation((query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      })),
+  describe('基本的な表示', () => {
+    it('should render with default variant', () => {
+      render(<Button>Click me</Button>);
+      expect(screen.getByRole('button')).toBeInTheDocument();
+      expect(screen.getByRole('button')).toHaveTextContent('Click me');
     });
-  });
 
-  describe('Gradient Styles', () => {
-    it('should render with primary gradient variant', () => {
-      render(
-        <AnimationProvider>
-          <Button variant="primary">Primary Button</Button>
-        </AnimationProvider>
-      );
-
-      const button = screen.getByText('Primary Button');
+    it('should render with primary variant', () => {
+      render(<Button variant="primary">Primary</Button>);
+      const button = screen.getByRole('button');
       expect(button).toHaveClass('bg-gradient-primary');
     });
 
-    it('should render with accent gradient variant', () => {
-      render(
-        <AnimationProvider>
-          <Button variant="accent">Accent Button</Button>
-        </AnimationProvider>
-      );
-
-      const button = screen.getByText('Accent Button');
+    it('should render with accent variant', () => {
+      render(<Button variant="accent">Accent</Button>);
+      const button = screen.getByRole('button');
       expect(button).toHaveClass('bg-gradient-accent');
     });
+  });
 
-    it('should have shadow styles', () => {
-      render(
-        <AnimationProvider>
-          <Button variant="primary">Button</Button>
-        </AnimationProvider>
-      );
+  describe('グラデーションスタイル (Requirement 5.1)', () => {
+    it('should have gradient background for primary variant', () => {
+      render(<Button variant="primary">Primary</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('bg-gradient-primary');
+      expect(button).toHaveClass('text-white');
+    });
 
-      const button = screen.getByText('Button');
+    it('should have gradient background for accent variant', () => {
+      render(<Button variant="accent">Accent</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('bg-gradient-accent');
+      expect(button).toHaveClass('text-white');
+    });
+
+    it('should have shadow effect', () => {
+      render(<Button variant="primary">Primary</Button>);
+      const button = screen.getByRole('button');
       expect(button).toHaveClass('shadow-lg');
     });
+
+    it('should have hover shadow effect', () => {
+      render(<Button variant="primary">Primary</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('hover:shadow-xl');
+    });
   });
 
-  describe('Size Variations', () => {
-    it('should render small size (min 44px height)', () => {
-      render(
-        <AnimationProvider>
-          <Button size="sm">Small</Button>
-        </AnimationProvider>
-      );
-
-      const button = screen.getByText('Small');
+  describe('サイズバリエーション (Requirement 5.3)', () => {
+    it('should render small size (44px minimum)', () => {
+      render(<Button size="sm">Small</Button>);
+      const button = screen.getByRole('button');
       expect(button).toHaveClass('h-11'); // 44px
+      expect(button).toHaveClass('px-4');
     });
 
-    it('should render medium size', () => {
-      render(
-        <AnimationProvider>
-          <Button size="md">Medium</Button>
-        </AnimationProvider>
-      );
-
-      const button = screen.getByText('Medium');
+    it('should render medium size (48px)', () => {
+      render(<Button size="md">Medium</Button>);
+      const button = screen.getByRole('button');
       expect(button).toHaveClass('h-12'); // 48px
+      expect(button).toHaveClass('px-6');
     });
 
-    it('should render large size', () => {
-      render(
-        <AnimationProvider>
-          <Button size="lg">Large</Button>
-        </AnimationProvider>
-      );
-
-      const button = screen.getByText('Large');
+    it('should render large size (56px)', () => {
+      render(<Button size="lg">Large</Button>);
+      const button = screen.getByRole('button');
       expect(button).toHaveClass('h-14'); // 56px
+      expect(button).toHaveClass('px-8');
+    });
+
+    it('should have minimum touch target of 44px', () => {
+      render(<Button size="sm">Small</Button>);
+      const button = screen.getByRole('button');
+      const computedStyle = window.getComputedStyle(button);
+      // h-11 = 2.75rem = 44px
+      expect(button).toHaveClass('h-11');
     });
   });
 
-  describe('Icon + Text Layout', () => {
+  describe('アイコン＋テキスト併用 (Requirement 5.3)', () => {
     it('should render with icon and text', () => {
       render(
-        <AnimationProvider>
-          <Button>
-            <Mail className="mr-2" />
-            Send Email
-          </Button>
-        </AnimationProvider>
+        <Button variant="primary">
+          <Home />
+          Home
+        </Button>
       );
-
-      expect(screen.getByText('Send Email')).toBeInTheDocument();
+      const button = screen.getByRole('button');
+      expect(button).toHaveTextContent('Home');
+      expect(button.querySelector('svg')).toBeInTheDocument();
     });
 
-    it('should have proper gap spacing for icon', () => {
+    it('should have proper gap between icon and text', () => {
       render(
-        <AnimationProvider>
-          <Button>
-            <Mail />
-            <span>Text</span>
-          </Button>
-        </AnimationProvider>
+        <Button>
+          <Home />
+          Home
+        </Button>
       );
-
       const button = screen.getByRole('button');
       expect(button).toHaveClass('gap-2');
     });
+
+    it('should style icons properly', () => {
+      render(
+        <Button>
+          <Home data-testid="icon" />
+          Home
+        </Button>
+      );
+      const button = screen.getByRole('button');
+      // SVGアイコンのスタイル確認
+      expect(button).toHaveClass('[&_svg]:size-4');
+      expect(button).toHaveClass('[&_svg]:shrink-0');
+    });
   });
 
-  describe('Loading State', () => {
-    it('should show loading spinner', () => {
-      render(
-        <AnimationProvider>
-          <Button isLoading>Loading</Button>
-        </AnimationProvider>
-      );
+  describe('アニメーション効果 (Requirements 8.2, 8.6)', () => {
+    it('should have animated prop', () => {
+      render(<Button animated>Animated</Button>);
+      expect(screen.getByRole('button')).toBeInTheDocument();
+    });
 
+    it('should not animate when disabled', () => {
+      render(
+        <Button animated disabled>
+          Disabled
+        </Button>
+      );
       const button = screen.getByRole('button');
       expect(button).toBeDisabled();
+      // disabled時はmotion.buttonではなく通常のbuttonをレンダリング
     });
 
-    it('should be disabled when loading', () => {
-      render(
-        <AnimationProvider>
-          <Button isLoading>Loading</Button>
-        </AnimationProvider>
-      );
-
-      expect(screen.getByRole('button')).toBeDisabled();
+    it('should show loading state with spinner', () => {
+      render(<Button isLoading>Loading</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toBeDisabled();
+      expect(button.querySelector('.animate-spin')).toBeInTheDocument();
     });
   });
 
-  describe('Disabled State', () => {
-    it('should be disabled', () => {
-      render(
-        <AnimationProvider>
-          <Button disabled>Disabled</Button>
-        </AnimationProvider>
-      );
-
+  describe('disabled状態', () => {
+    it('should be disabled when disabled prop is true', () => {
+      render(<Button disabled>Disabled</Button>);
       expect(screen.getByRole('button')).toBeDisabled();
     });
 
-    it('should have reduced opacity when disabled', () => {
-      render(
-        <AnimationProvider>
-          <Button disabled>Disabled</Button>
-        </AnimationProvider>
-      );
+    it('should be disabled when isLoading is true', () => {
+      render(<Button isLoading>Loading</Button>);
+      expect(screen.getByRole('button')).toBeDisabled();
+    });
 
+    it('should have opacity-50 when disabled', () => {
+      render(<Button disabled>Disabled</Button>);
+      expect(screen.getByRole('button')).toHaveClass('disabled:opacity-50');
+    });
+
+    it('should not have pointer events when disabled', () => {
+      render(<Button disabled>Disabled</Button>);
+      expect(screen.getByRole('button')).toHaveClass(
+        'disabled:pointer-events-none'
+      );
+    });
+  });
+
+  describe('フォーカス管理', () => {
+    it('should have focus-visible outline', () => {
+      render(<Button>Focus me</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('disabled:opacity-50');
+      expect(button).toHaveClass('focus-visible:outline-none');
+      expect(button).toHaveClass('focus-visible:ring-2');
+      expect(button).toHaveClass('focus-visible:ring-ring');
+    });
+
+    it('should have focus ring offset', () => {
+      render(<Button>Focus me</Button>);
+      expect(screen.getByRole('button')).toHaveClass(
+        'focus-visible:ring-offset-2'
+      );
+    });
+  });
+
+  describe('その他のバリアント', () => {
+    it('should render destructive variant', () => {
+      render(<Button variant="destructive">Delete</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('bg-destructive');
+    });
+
+    it('should render outline variant', () => {
+      render(<Button variant="outline">Outline</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('border');
+      expect(button).toHaveClass('bg-background');
+    });
+
+    it('should render secondary variant', () => {
+      render(<Button variant="secondary">Secondary</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('bg-secondary');
+    });
+
+    it('should render ghost variant', () => {
+      render(<Button variant="ghost">Ghost</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('hover:bg-accent');
+    });
+
+    it('should render link variant', () => {
+      render(<Button variant="link">Link</Button>);
+      const button = screen.getByRole('button');
+      expect(button).toHaveClass('underline-offset-4');
+    });
+  });
+
+  describe('アクセシビリティ', () => {
+    it('should have role="button"', () => {
+      render(<Button>Click me</Button>);
+      expect(screen.getByRole('button')).toBeInTheDocument();
+    });
+
+    it('should be keyboard accessible', async () => {
+      const user = userEvent.setup();
+      const handleClick = vi.fn();
+      render(<Button onClick={handleClick}>Click me</Button>);
+      
+      const button = screen.getByRole('button');
+      button.focus();
+      await user.keyboard('{Enter}');
+      
+      expect(handleClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should support custom aria-label', () => {
+      render(<Button aria-label="Custom label">Click</Button>);
+      expect(screen.getByLabelText('Custom label')).toBeInTheDocument();
     });
   });
 });
