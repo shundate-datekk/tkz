@@ -1,17 +1,42 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { AuthErrorMessage } from "./auth-error-message";
 import { useSessionManagement } from "@/hooks/use-session-management";
+
+const REMEMBER_ME_KEY = 'rememberMe';
 
 export function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const error = searchParams.get("error");
   const { getReturnUrl, clearReturnUrl } = useSessionManagement();
+  
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // localStorageから「ログイン状態を保持」の設定を復元
+  useEffect(() => {
+    const saved = localStorage.getItem(REMEMBER_ME_KEY);
+    if (saved === 'true') {
+      setRememberMe(true);
+    }
+  }, []);
+
+  // 「ログイン状態を保持」の変更をlocalStorageに保存
+  const handleRememberMeChange = (checked: boolean) => {
+    setRememberMe(checked);
+    if (checked) {
+      localStorage.setItem(REMEMBER_ME_KEY, 'true');
+    } else {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+    }
+  };
 
   const handleGoogleSignIn = () => {
     // 保存されたreturnUrlを取得
@@ -34,6 +59,24 @@ export function LoginForm() {
 
         <p className="text-sm text-muted-foreground text-center">
           Googleアカウントでログインしてください
+        </p>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="remember-me"
+            checked={rememberMe}
+            onCheckedChange={handleRememberMeChange}
+          />
+          <Label
+            htmlFor="remember-me"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            ログイン状態を保持
+          </Label>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          チェックを入れると、30日間ログイン状態が保持されます。
         </p>
 
         <Button
