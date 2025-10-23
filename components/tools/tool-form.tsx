@@ -77,8 +77,10 @@ export function ToolForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, handleFormError)} className="space-y-6">
-        {/* ツール名 */}
-        <FormField
+        {/* ツール名とカテゴリ: デスクトップで2カラム */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* ツール名 */}
+          <FormField
           control={form.control}
           name="tool_name"
           render={({ field }) => (
@@ -130,7 +132,8 @@ export function ToolForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+          />
+        </div>
 
         {/* 使用目的 */}
         <FormField
@@ -180,10 +183,12 @@ export function ToolForm({
           )}
         />
 
-        {/* 評価 */}
-        <FormField
-          control={form.control}
-          name="rating"
+        {/* 評価と使用日: デスクトップで2カラム */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* 評価 */}
+          <FormField
+            control={form.control}
+            name="rating"
           render={({ field }) => (
             <FormItem>
               <FormLabel>評価 *</FormLabel>
@@ -211,12 +216,12 @@ export function ToolForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+          />
 
-        {/* 使用日時 */}
-        <FormField
-          control={form.control}
-          name="usage_date"
+          {/* 使用日時 */}
+          <FormField
+            control={form.control}
+            name="usage_date"
           render={({ field }) => (
             <FormItem>
               <FormLabel>使用日 *</FormLabel>
@@ -229,7 +234,8 @@ export function ToolForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+          />
+        </div>
 
         <Button type="submit" className="w-full" isLoading={isFormDisabled} disabled={isFormDisabled}>
           {isFormDisabled ? loadingText : submitButtonText}

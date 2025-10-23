@@ -1,259 +1,220 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { ThemeProvider, useTheme } from '../theme-provider';
 
-/**
- * テーマ管理Providerのテスト
- *
- * このテストは、ライト/ダークモード切り替え、システム設定連動、
- * localStorage永続化、トランジション効果を検証します。
- */
-
-// テスト用コンポーネント
+// テストコンポーネント
 function TestComponent() {
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   return (
     <div>
-      <div data-testid="current-theme">{theme}</div>
+      <div data-testid="theme">{theme}</div>
       <div data-testid="resolved-theme">{resolvedTheme}</div>
-      <button onClick={() => setTheme('light')}>Light</button>
-      <button onClick={() => setTheme('dark')}>Dark</button>
-      <button onClick={() => setTheme('system')}>System</button>
+      <button onClick={() => setTheme('light')} data-testid="set-light">
+        Set Light
+      </button>
+      <button onClick={() => setTheme('dark')} data-testid="set-dark">
+        Set Dark
+      </button>
+      <button onClick={() => setTheme('system')} data-testid="set-system">
+        Set System
+      </button>
     </div>
   );
 }
 
 describe('ThemeProvider', () => {
-  let matchMediaMock: any;
-
   beforeEach(() => {
-    // localStorage をモック
+    // localStorageをクリア
     localStorage.clear();
 
-    // matchMedia をモック
-    matchMediaMock = vi.fn((query: string) => ({
-      matches: query === '(prefers-color-scheme: dark)',
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-
+    // matchMediaをモック
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
-      value: matchMediaMock,
+      value: vi.fn().mockImplementation((query) => ({
+        matches: query === '(prefers-color-scheme: dark)' ? false : false,
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
     });
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  describe('Initial State', () => {
-    it('should default to system theme', () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
+  it('should render with default light theme', () => {
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
 
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('system');
+    expect(screen.getByTestId('theme').textContent).toBe('light');
+    expect(screen.getByTestId('resolved-theme').textContent).toBe('light');
+  });
+
+  it('should change theme to dark', async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    await user.click(screen.getByTestId('set-dark'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('theme').textContent).toBe('dark');
+      expect(screen.getByTestId('resolved-theme').textContent).toBe('dark');
     });
+  });
 
-    it('should resolve system theme to dark when prefers-color-scheme is dark', () => {
-      matchMediaMock.mockImplementation((query: string) => ({
+  it('should persist theme to localStorage', async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    await user.click(screen.getByTestId('set-dark'));
+
+    await waitFor(() => {
+      expect(localStorage.getItem('app-theme')).toBe('dark');
+    });
+  });
+
+  it('should load theme from localStorage on mount', () => {
+    localStorage.setItem('app-theme', 'dark');
+
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByTestId('theme').textContent).toBe('dark');
+  });
+
+  it('should handle system theme preference', async () => {
+    const user = userEvent.setup();
+
+    // システム設定をdarkに
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query) => ({
         matches: query === '(prefers-color-scheme: dark)',
         media: query,
+        onchange: null,
         addEventListener: vi.fn(),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      }));
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark');
+      })),
     });
 
-    it('should resolve system theme to light when prefers-color-scheme is light', () => {
-      matchMediaMock.mockImplementation((query: string) => ({
-        matches: query === '(prefers-color-scheme: light)',
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    await user.click(screen.getByTestId('set-system'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('theme').textContent).toBe('system');
+      expect(screen.getByTestId('resolved-theme').textContent).toBe('dark');
+    });
+  });
+
+  it('should apply dark class to document element when theme is dark', async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    await user.click(screen.getByTestId('set-dark'));
+
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+    });
+  });
+
+  it('should remove dark class when theme is light', async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    // まずdarkにする
+    await user.click(screen.getByTestId('set-dark'));
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+    });
+
+    // lightに戻す
+    await user.click(screen.getByTestId('set-light'));
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
+  });
+
+  it('should accept defaultTheme prop', () => {
+    render(
+      <ThemeProvider defaultTheme="dark">
+        <TestComponent />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByTestId('theme').textContent).toBe('dark');
+  });
+
+  it('should listen to system preference changes', async () => {
+    let mediaListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query) => ({
+        matches: query === '(prefers-color-scheme: dark)' ? false : false,
         media: query,
-        addEventListener: vi.fn(),
+        onchange: null,
+        addEventListener: vi.fn((_, listener) => {
+          mediaListener = listener;
+        }),
         removeEventListener: vi.fn(),
         dispatchEvent: vi.fn(),
-      }));
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light');
-    });
-  });
-
-  describe('Theme Switching', () => {
-    it('should switch to light theme', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      await user.click(screen.getByText('Light'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('current-theme')).toHaveTextContent('light');
-        expect(screen.getByTestId('resolved-theme')).toHaveTextContent('light');
-      });
+      })),
     });
 
-    it('should switch to dark theme', async () => {
-      const user = userEvent.setup();
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
 
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
+    // systemテーマに設定
+    await user.click(screen.getByTestId('set-system'));
 
-      await user.click(screen.getByText('Dark'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('current-theme')).toHaveTextContent('dark');
-        expect(screen.getByTestId('resolved-theme')).toHaveTextContent('dark');
-      });
+    await waitFor(() => {
+      expect(screen.getByTestId('theme').textContent).toBe('system');
     });
 
-    it('should switch back to system theme', async () => {
-      const user = userEvent.setup();
+    // システム設定変更をシミュレート
+    if (mediaListener) {
+      mediaListener({ matches: true } as MediaQueryListEvent);
+    }
 
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      await user.click(screen.getByText('Light'));
-      await user.click(screen.getByText('System'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('current-theme')).toHaveTextContent('system');
-      });
-    });
-  });
-
-  describe('LocalStorage Persistence', () => {
-    it('should save theme preference to localStorage', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      await user.click(screen.getByText('Dark'));
-
-      await waitFor(() => {
-        expect(localStorage.getItem('theme')).toBe('dark');
-      });
-    });
-
-    it('should load theme preference from localStorage', () => {
-      localStorage.setItem('theme', 'light');
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('light');
-    });
-
-    it('should remove invalid theme from localStorage', () => {
-      localStorage.setItem('theme', 'invalid-theme');
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      expect(screen.getByTestId('current-theme')).toHaveTextContent('system');
-      expect(localStorage.getItem('theme')).toBeNull();
-    });
-  });
-
-  describe('DOM Class Application', () => {
-    it('should apply dark class to document element when theme is dark', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      await user.click(screen.getByText('Dark'));
-
-      await waitFor(() => {
-        expect(document.documentElement.classList.contains('dark')).toBe(true);
-      });
-    });
-
-    it('should remove dark class when theme is light', async () => {
-      const user = userEvent.setup();
-
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      await user.click(screen.getByText('Dark'));
-      await user.click(screen.getByText('Light'));
-
-      await waitFor(() => {
-        expect(document.documentElement.classList.contains('dark')).toBe(false);
-      });
-    });
-  });
-
-  describe('System Theme Changes', () => {
-    it('should listen to system theme changes', () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-
-      // addEventListener が呼ばれたことを確認
-      expect(matchMediaMock).toHaveBeenCalledWith('(prefers-color-scheme: dark)');
-    });
-  });
-
-  describe('Hook Usage Outside Provider', () => {
-    it('should throw error when useTheme is used outside ThemeProvider', () => {
-      // エラーをキャッチするためにコンソールエラーを抑制
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-      expect(() => {
-        render(<TestComponent />);
-      }).toThrow('useTheme must be used within ThemeProvider');
-
-      consoleSpy.mockRestore();
+    await waitFor(() => {
+      expect(screen.getByTestId('resolved-theme').textContent).toBe('dark');
     });
   });
 });

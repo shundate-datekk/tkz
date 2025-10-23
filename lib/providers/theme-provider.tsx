@@ -35,8 +35,14 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
  *
  * Requirements: 9.1, 9.2, 9.3
  */
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
+export function ThemeProvider({
+  children,
+  defaultTheme = 'light',
+}: {
+  children: React.ReactNode;
+  defaultTheme?: Theme;
+}) {
+  const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   /**
@@ -58,19 +64,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
    * 初期化: localStorageからテーマを読み込む
    */
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    const savedTheme = localStorage.getItem('app-theme') as Theme | null;
 
     if (savedTheme && ['light', 'dark', 'system'].includes(savedTheme)) {
       setThemeState(savedTheme);
       setResolvedTheme(resolveTheme(savedTheme));
     } else {
-      // 無効な値の場合は削除
+      // 保存されたテーマがない場合はdefaultThemeを使用
       if (savedTheme) {
-        localStorage.removeItem('theme');
+        localStorage.removeItem('app-theme');
       }
-      setResolvedTheme(getSystemTheme());
+      setThemeState(defaultTheme);
+      setResolvedTheme(resolveTheme(defaultTheme));
     }
-  }, [resolveTheme]);
+  }, [resolveTheme, defaultTheme]);
 
   /**
    * システムのカラースキーム変更を監視
@@ -78,9 +85,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const handleChange = () => {
+    const handleChange = (e: MediaQueryListEvent) => {
       if (theme === 'system') {
-        setResolvedTheme(getSystemTheme());
+        setResolvedTheme(e.matches ? 'dark' : 'light');
       }
     };
 
@@ -122,7 +129,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
     setResolvedTheme(resolveTheme(newTheme));
-    localStorage.setItem('theme', newTheme);
+    localStorage.setItem('app-theme', newTheme);
   };
 
   const value: ThemeContextType = {

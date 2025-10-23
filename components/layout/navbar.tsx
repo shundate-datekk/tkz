@@ -11,6 +11,7 @@ import { CommandMenu } from "@/components/ui/command-menu";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -113,6 +114,9 @@ export function Navbar({ userName }: NavbarProps) {
             <SheetContent side="right" className="w-[350px]">
               <SheetHeader>
                 <SheetTitle>メニュー</SheetTitle>
+                <SheetDescription>
+                  ナビゲーションメニューとアカウント設定
+                </SheetDescription>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-4">
                 {/* グローバル検索 */}

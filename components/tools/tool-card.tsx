@@ -42,7 +42,7 @@ export function ToolCard({
   });
 
   return (
-    <Card className="flex flex-col">
+    <Card animated className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">

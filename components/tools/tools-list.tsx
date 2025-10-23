@@ -179,7 +179,7 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {filteredAndSortedTools.map((tool) => (
             <ToolCard
               key={tool.id}
