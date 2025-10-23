@@ -151,7 +151,7 @@ FormDescription.displayName = 'FormDescription';
 
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
+  React.ComponentPropsWithoutRef<'p'>
 >(({ className, children, ...props }, ref) => {
   const { error, formMessageId } = useFormField();
   const body = error ? String(error?.message) : children;
@@ -173,6 +173,82 @@ const FormMessage = React.forwardRef<
 });
 FormMessage.displayName = 'FormMessage';
 
+const FormErrors = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { formState } = useFormContext();
+  const { errors } = formState;
+  const errorEntries = Object.entries(errors);
+
+  // エラーがない場合は何も表示しない
+  if (errorEntries.length === 0) {
+    return null;
+  }
+
+  const scrollToField = (fieldName: string) => {
+    // フォーム要素を取得してフォーカス
+    const inputElement = document.getElementById(`${fieldName}-form-item`) as HTMLInputElement;
+    if (inputElement) {
+      inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // 少し遅延させてフォーカス
+      setTimeout(() => {
+        inputElement.focus();
+      }, 100);
+    }
+  };
+
+  return (
+    <div
+      ref={ref}
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
+      className={cn(
+        'mb-4 rounded-md border border-destructive bg-destructive/10 p-4',
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-destructive"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <h3 className="text-sm font-semibold text-destructive">
+          入力内容にエラーがあります ({errorEntries.length}件のエラー)
+        </h3>
+      </div>
+      <ul className="list-disc list-inside space-y-1">
+        {errorEntries.map(([fieldName, error]) => (
+          <li key={fieldName} className="text-sm text-destructive">
+            <button
+              type="button"
+              onClick={() => scrollToField(fieldName)}
+              className="hover:underline focus:underline focus:outline-none"
+            >
+              {String((error as any)?.message)}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+});
+FormErrors.displayName = 'FormErrors';
+
 export {
   useFormField,
   Form,
@@ -182,4 +258,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  FormErrors,
 };
