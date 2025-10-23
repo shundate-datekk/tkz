@@ -1,17 +1,27 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthErrorMessage } from "./auth-error-message";
+import { useSessionManagement } from "@/hooks/use-session-management";
 
 export function LoginForm() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const error = searchParams.get("error");
+  const { getReturnUrl, clearReturnUrl } = useSessionManagement();
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: "/" });
+    // 保存されたreturnUrlを取得
+    const returnUrl = getReturnUrl();
+    
+    // ログイン後のリダイレクト先を設定
+    signIn("google", { callbackUrl: returnUrl });
+    
+    // returnUrlをクリア
+    clearReturnUrl();
   };
 
   return (

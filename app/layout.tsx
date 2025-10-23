@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_JP } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "./providers";
 import { WebVitals } from "@/components/analytics/web-vitals";
+import { SessionManager } from "@/components/auth/session-manager";
 import "./globals.css";
 
 const inter = Inter({
@@ -56,6 +57,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster position="top-center" />
+          <SessionManager />
           <WebVitals />
         </Providers>
       </body>
