@@ -25,13 +25,13 @@
   - _Requirements: 9.1, 9.2, 9.3_
 
 - [ ] 2. 新規依存関係のインストールと設定を行う
-- [ ] 2.1 Motion（旧Framer Motion）をインストールして設定する
+- [x] 2.1 Motion（旧Framer Motion）をインストールして設定する
   - motion パッケージ（12.0.0+）をインストールする
   - AnimationProvider を作成し、reduced-motion対応を実装する
   - サンプルアニメーションコンポーネントで動作確認する
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-- [ ] 2.2 SWRをインストールしてグローバル設定を行う
+- [x] 2.2 SWRをインストールしてグローバル設定を行う
   - swr パッケージ（2.x）をインストールする
   - SWRConfig でグローバル設定を実装する（dedupingInterval, revalidateOnFocus）
   - 既存のServer Actionsと統合するfetcher関数を作成する

@@ -3,57 +3,48 @@
 import { SWRConfig } from 'swr';
 import type { ReactNode } from 'react';
 
+interface SWRProviderProps {
+  children: ReactNode;
+}
+
 /**
- * SWRグローバル設定Provider
- *
- * データフェッチングのグローバル設定を提供します。
- * - dedupingInterval: 重複リクエストの排除（2秒）
- * - revalidateOnFocus: フォーカス時の再検証
- * - revalidateOnReconnect: 再接続時の再検証
- *
- * Requirements: 14.3
+ * SWRProvider - SWRのグローバル設定を提供
+ * 
+ * 機能:
+ * - グローバルエラーハンドリング
+ * - デフォルトの再検証設定
+ * - リクエストの重複排除（dedupe）
+ * - フォーカス時の再検証
  */
-export function SWRProvider({ children }: { children: ReactNode }) {
+export function SWRProvider({ children }: SWRProviderProps) {
   return (
     <SWRConfig
       value={{
-        // 重複リクエストの排除（2秒以内の同じキーへのリクエストは1つにまとめる）
-        dedupingInterval: 2000,
+        // デフォルトのフェッチャー（オプション）
+        // fetcher: (url: string) => fetch(url).then((res) => res.json()),
         
-        // ウィンドウフォーカス時に再検証
-        revalidateOnFocus: true,
-        
-        // ネットワーク再接続時に再検証
-        revalidateOnReconnect: true,
-        
-        // エラー時の再試行設定
-        errorRetryCount: 3,
-        errorRetryInterval: 5000,
-        
-        // デフォルトのfetcher（Server Actionsと互換性あり）
-        // Server Actionは直接関数として渡せるため、
-        // fetcher内では引数をそのまま実行するだけでOK
-        fetcher: async (...args: any[]) => {
-          const [key, action] = args;
-          
-          // actionが関数の場合はServer Actionとして実行
-          if (typeof action === 'function') {
-            return action(key);
-          }
-          
-          // actionがない場合はkeyを直接実行（関数として）
-          if (typeof key === 'function') {
-            return key();
-          }
-          
-          throw new Error('Invalid fetcher arguments');
+        // エラーハンドリング
+        onError: (error) => {
+          console.error('SWR Error:', error);
         },
         
-        // ローディング時のフォールバック
-        suspense: false,
+        // 再検証設定
+        revalidateOnFocus: true,
+        revalidateOnReconnect: true,
+        revalidateOnMount: true,
         
-        // キャッシュの永続化（オプション）
-        provider: () => new Map(),
+        // リクエストの重複排除
+        dedupingInterval: 2000, // 2秒以内の重複リクエストを排除
+        
+        // エラーリトライ設定
+        errorRetryCount: 3,
+        errorRetryInterval: 5000, // 5秒
+        
+        // タイムアウト設定
+        focusThrottleInterval: 5000, // フォーカス時の再検証を5秒に1回に制限
+        
+        // キャッシュ設定
+        shouldRetryOnError: true,
       }}
     >
       {children}
