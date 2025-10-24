@@ -79,7 +79,8 @@ export async function regeneratePromptAction(
  */
 export async function savePromptHistoryAction(
   promptText: string,
-  inputParameters: GeneratePromptInput
+  inputParameters: GeneratePromptInput,
+  outputLanguage?: "ja" | "en"
 ): Promise<ActionResult<{ id: string }>> {
   try {
     const userId = await getCurrentUserId();
@@ -95,6 +96,7 @@ export async function savePromptHistoryAction(
       prompt_text: promptText,
       input_parameters: inputParameters as any,
       created_by: userId,
+      output_language: outputLanguage || inputParameters.outputLanguage || "ja",
     });
 
     if (!result.success) {

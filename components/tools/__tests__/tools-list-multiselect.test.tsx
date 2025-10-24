@@ -3,11 +3,6 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ToolsList } from '../tools-list';
 import type { AITool } from '@/lib/schemas/ai-tool.schema';
 
-// Mock next/link
-vi.mock('next/link', () => ({
-  default: ({ children, href }: any) => <a href={href}>{children}</a>,
-}));
-
 // Mock like actions
 vi.mock('@/lib/actions/like.actions', () => ({
   likeToolAction: vi.fn(),
@@ -82,6 +77,10 @@ describe('ToolsList - Multi-select', () => {
         />
       );
 
+      // 選択モードをONにする
+      const toggleButton = screen.getByRole('button', { name: /選択/i });
+      fireEvent.click(toggleButton);
+
       // 「すべて選択」チェックボックスが表示される
       const selectAllCheckbox = screen.getByRole('checkbox', {
         name: /すべて選択/i,
@@ -97,6 +96,10 @@ describe('ToolsList - Multi-select', () => {
           currentUserId="user-1"
         />
       );
+
+      // 選択モードをONにする
+      const toggleButton = screen.getByRole('button', { name: /選択/i });
+      fireEvent.click(toggleButton);
 
       // 各ツールカードにチェックボックスが表示される
       const checkboxes = screen.getAllByRole('checkbox');

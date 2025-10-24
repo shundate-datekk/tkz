@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ToolCreateForm } from "@/components/tools/tool-create-form";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Navbar } from "@/components/layout/navbar";
 
 export const metadata: Metadata = {
@@ -22,6 +23,16 @@ export default async function NewToolPage() {
 
       {/* Main Content */}
       <div className="container mx-auto max-w-2xl px-4 py-8">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'ホーム', href: '/' },
+            { label: 'AIツール一覧', href: '/tools' },
+            { label: '新規登録' },
+          ]}
+          className="mb-4"
+        />
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold">新規AIツール登録</h1>
           <p className="mt-2 text-muted-foreground">

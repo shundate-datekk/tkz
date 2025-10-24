@@ -56,6 +56,7 @@ export interface VideoPromptParams {
   style?: string;
   duration?: string;
   additionalRequirements?: string;
+  outputLanguage?: "ja" | "en";
 }
 
 /**
@@ -69,18 +70,8 @@ export class OpenAIClient {
    */
   async generateVideoPrompt(params: VideoPromptParams): Promise<string> {
     return withRetry(async () => {
-      const systemPrompt = `あなたはSora2（OpenAIの動画生成AI）のプロンプト作成の専門家です。
-ユーザーの要望を基に、効果的な動画生成プロンプトを英語で作成してください。
-
-プロンプト作成のガイドライン:
-- 具体的で詳細な視覚的描写を含める
-- カメラアングル、照明、雰囲気を明確に指定
-- 動きや時間の流れを記述
-- 色彩やスタイルを具体的に表現
-- 150-300単語程度で簡潔に
-- 英語で出力すること
-
-プロンプトのみを出力し、説明文は含めないでください。`;
+      const outputLanguage = params.outputLanguage || "ja";
+      const systemPrompt = this.buildSystemPrompt(outputLanguage);
 
       const userPrompt = this.buildUserPrompt(params);
 
@@ -105,29 +96,85 @@ export class OpenAIClient {
   }
 
   /**
+   * System Promptを構築（言語に応じて）
+   */
+  private buildSystemPrompt(language: "ja" | "en"): string {
+    const basePrompt = `You are an expert at creating video generation prompts for Sora2 (OpenAI's video generation AI).
+Based on user requirements, create an effective video generation prompt.`;
+
+    const guidelines = {
+      ja: `
+プロンプト作成のガイドライン:
+- 具体的で詳細な視覚的描写を含める
+- カメラアングル、照明、雰囲気を明確に指定
+- 動きや時間の流れを記述
+- 色彩やスタイルを具体的に表現
+- 150-300文字程度で簡潔に
+- 日本語で出力すること
+
+プロンプトのみを出力し、説明文は含めないでください。`,
+      en: `
+Prompt creation guidelines:
+- Include specific and detailed visual descriptions
+- Clearly specify camera angles, lighting, and atmosphere
+- Describe movement and the flow of time
+- Express colors and style concretely
+- Keep it concise at around 150-300 words
+- Output in English
+
+Output only the prompt, do not include any explanatory text.`,
+    };
+
+    return `${basePrompt}
+${guidelines[language]}`;
+  }
+
+  /**
    * ユーザープロンプトを構築
    */
   private buildUserPrompt(params: VideoPromptParams): string {
+    const language = params.outputLanguage || "ja";
     const parts: string[] = [];
 
-    parts.push(`目的: ${params.purpose}`);
-    parts.push(`シーン: ${params.sceneDescription}`);
+    if (language === "ja") {
+      parts.push(`目的: ${params.purpose}`);
+      parts.push(`シーン: ${params.sceneDescription}`);
 
-    if (params.style) {
-      parts.push(`スタイル: ${params.style}`);
+      if (params.style) {
+        parts.push(`スタイル: ${params.style}`);
+      }
+
+      if (params.duration) {
+        parts.push(`長さ: ${params.duration}`);
+      }
+
+      if (params.additionalRequirements) {
+        parts.push(`その他の要望: ${params.additionalRequirements}`);
+      }
+
+      parts.push(
+        "\n上記の情報を基に、Sora2で動画を生成するための日本語プロンプトを作成してください。"
+      );
+    } else {
+      parts.push(`Purpose: ${params.purpose}`);
+      parts.push(`Scene: ${params.sceneDescription}`);
+
+      if (params.style) {
+        parts.push(`Style: ${params.style}`);
+      }
+
+      if (params.duration) {
+        parts.push(`Duration: ${params.duration}`);
+      }
+
+      if (params.additionalRequirements) {
+        parts.push(`Additional requirements: ${params.additionalRequirements}`);
+      }
+
+      parts.push(
+        "\nBased on the information above, create an English prompt for generating a video with Sora2."
+      );
     }
-
-    if (params.duration) {
-      parts.push(`長さ: ${params.duration}`);
-    }
-
-    if (params.additionalRequirements) {
-      parts.push(`その他の要望: ${params.additionalRequirements}`);
-    }
-
-    parts.push(
-      "\n上記の情報を基に、Sora2で動画を生成するための英語プロンプトを作成してください。"
-    );
 
     return parts.join("\n");
   }

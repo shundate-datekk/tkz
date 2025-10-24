@@ -67,6 +67,7 @@ Managed by `/kiro:steering` command. Updates here reflect command changes.
   Mode: Always|Conditional|Manual
   Pattern: File patterns for Conditional mode
 -->
+- `i18n-localization.md`: Conditional - `**/prompt*`, `**/i18n*`, `**/*localization*` - 多言語対応（日本語/英語）の実装ガイドライン（Sora2プロンプト生成の出力言語選択機能）
 
 ### Inclusion Modes
 - **Always**: Loaded in every interaction (default)

@@ -1,10 +1,22 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { Loader2, ListChecks, X } from "lucide-react";
+import { Loader2, ListChecks, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { bulkDeleteToolsAction, bulkRestoreToolsAction } from "@/lib/actions/ai-tool.actions";
 import {
   Select,
   SelectContent,
@@ -35,6 +47,12 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortOption, setSortOption] = useState<SortOption>("usage_date-desc");
   const [isSearching, setIsSearching] = useState(false);
+  
+  // 複数選択機能の状態
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // デバウンス処理: 300ms後に検索を実行
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -104,6 +122,94 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
     return result;
   }, [tools, debouncedSearchQuery, selectedCategory, sortOption]);
 
+  // 複数選択のハンドラー
+  const handleToggleSelection = (toolId: string) => {
+    setSelectedTools((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(toolId)) {
+        newSet.delete(toolId);
+      } else {
+        newSet.add(toolId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedTools.size === filteredAndSortedTools.length) {
+      setSelectedTools(new Set());
+    } else {
+      setSelectedTools(new Set(filteredAndSortedTools.map((tool) => tool.id)));
+    }
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedTools(new Set());
+  };
+
+  const handleEnterSelectionMode = () => {
+    setSelectionMode(true);
+    setSelectedTools(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTools.size === 0) return;
+    setShowBulkDeleteDialog(true);
+  };
+
+  const handleConfirmBulkDelete = () => {
+    startTransition(async () => {
+      try {
+        const toolIds = Array.from(selectedTools);
+        const result = await bulkDeleteToolsAction(toolIds);
+
+        if (!result.success) {
+          toast.error("一括削除に失敗しました", {
+            description: result.error,
+          });
+          return;
+        }
+
+        toast.success(`${result.data.count}件のツールを削除しました`, {
+          description: "30日以内であれば復元できます",
+          duration: 10000, // 10秒間表示
+          action: {
+            label: "元に戻す",
+            onClick: async () => {
+              // Undo処理を実行
+              const restoreResult = await bulkRestoreToolsAction(toolIds);
+              
+              if (!restoreResult.success) {
+                toast.error("削除の取り消しに失敗しました", {
+                  description: restoreResult.error,
+                });
+                return;
+              }
+
+              toast.success(`${restoreResult.data.count}件のツールを復元しました`);
+            },
+          },
+        });
+
+        setShowBulkDeleteDialog(false);
+        setSelectionMode(false);
+        setSelectedTools(new Set());
+      } catch (error) {
+        console.error("Failed to bulk delete tools:", error);
+        toast.error("一括削除中にエラーが発生しました");
+      }
+    });
+  };
+
+  // すべて選択チェックボックスの状態
+  const selectAllCheckboxState = 
+    selectedTools.size === 0 
+      ? false 
+      : selectedTools.size === filteredAndSortedTools.length 
+      ? true 
+      : "indeterminate";
+
   return (
     <div className="space-y-6">
       {/* 検索ボックスとローディング表示 */}
@@ -116,6 +222,61 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
           </div>
         )}
       </div>
+
+      {/* 選択モード切り替えと選択状態表示 */}
+      {!selectionMode ? (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEnterSelectionMode}
+          >
+            <ListChecks className="mr-2 h-4 w-4" />
+            選択
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/50 p-3">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={selectAllCheckboxState}
+                onCheckedChange={handleSelectAll}
+                aria-label="すべて選択"
+              />
+              <label className="text-sm font-medium cursor-pointer" onClick={handleSelectAll}>
+                すべて選択
+              </label>
+            </div>
+            {selectedTools.size > 0 && (
+              <span className="text-sm text-muted-foreground">
+                {selectedTools.size}件選択中
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedTools.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={isPending}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {selectedTools.size}件削除
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelSelection}
+            >
+              <X className="mr-2 h-4 w-4" />
+              キャンセル
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* フィルタとソート */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -187,10 +348,63 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
               tool={tool}
               userName={userMap.get(tool.created_by) || "不明"}
               currentUserId={currentUserId}
+              selectionMode={selectionMode}
+              isSelected={selectedTools.has(tool.id)}
+              onToggleSelection={() => handleToggleSelection(tool.id)}
             />
           ))}
         </div>
       )}
+
+      {/* 一括削除確認ダイアログ */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>一括削除の確認</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>選択した{selectedTools.size}件のツールを削除してもよろしいですか？</p>
+                
+                {/* 削除対象のプレビュー */}
+                <div className="rounded-lg border bg-muted/50 p-4 space-y-2 max-h-60 overflow-y-auto">
+                  <p className="text-sm font-medium text-foreground">削除対象:</p>
+                  <ul className="text-sm text-foreground space-y-1">
+                    {Array.from(selectedTools).map((toolId) => {
+                      const tool = filteredAndSortedTools.find((t) => t.id === toolId);
+                      return tool ? (
+                        <li key={toolId} className="flex items-center gap-2">
+                          <span className="text-muted-foreground">•</span>
+                          <span>{tool.tool_name}</span>
+                          <span className="text-muted-foreground">({tool.category})</span>
+                        </li>
+                      ) : null;
+                    })}
+                  </ul>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  削除後30日以内であれば復元できます。30日を過ぎると自動的に完全削除されます。
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmBulkDelete();
+              }}
+              disabled={isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPending ? "削除中..." : `${selectedTools.size}件削除する`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

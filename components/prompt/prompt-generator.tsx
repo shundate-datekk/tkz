@@ -13,6 +13,7 @@ export function PromptGenerator() {
   const [isPending, startTransition] = useTransition();
   const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
   const [lastInput, setLastInput] = useState<GeneratePromptInput | null>(null);
+  const [outputLanguage, setOutputLanguage] = useState<"ja" | "en">("ja");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,6 +41,7 @@ export function PromptGenerator() {
         // 生成されたプロンプトと入力パラメータを保存
         setGeneratedPrompt(result.data.promptText);
         setLastInput(data);
+        setOutputLanguage(data.outputLanguage || "ja");
 
         // モーダルを開く
         setIsDialogOpen(true);
@@ -81,7 +83,7 @@ export function PromptGenerator() {
 
     setIsSaving(true);
     try {
-      const result = await savePromptHistoryAction(generatedPrompt, lastInput);
+      const result = await savePromptHistoryAction(generatedPrompt, lastInput, outputLanguage);
 
       if (!result.success) {
         toast.error(result.error);

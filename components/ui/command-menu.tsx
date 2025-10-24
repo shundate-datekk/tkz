@@ -12,6 +12,9 @@ import { cn } from '@/lib/utils';
  */
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState<any[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
   const router = useRouter();
 
   // キーボードショートカット
@@ -26,6 +29,36 @@ export function CommandMenu() {
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
   }, []);
+
+  // 検索処理（デバウンス付き）
+  React.useEffect(() => {
+    const searchTools = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+
+      // 動的インポートでServer Actionを読み込む
+      const { searchToolsAction } = await import('@/lib/actions/ai-tool.actions');
+      const result = await searchToolsAction(searchQuery);
+
+      if (result.success) {
+        setSearchResults(result.data);
+      } else {
+        setSearchResults([]);
+      }
+
+      setIsSearching(false);
+    };
+
+    // デバウンス: 300ms待ってから検索実行
+    const timeoutId = setTimeout(searchTools, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   const runCommand = React.useCallback((command: () => void) => {
     setOpen(false);
@@ -55,13 +88,16 @@ export function CommandMenu() {
       >
         <Command.Input
           placeholder="検索キーワードを入力..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
           className="flex h-11 w-full rounded-md bg-transparent px-3 py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
         />
         <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden">
           <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
-            結果が見つかりませんでした。
+            {isSearching ? '検索中...' : '結果が見つかりませんでした。'}
           </Command.Empty>
 
+          {/* ページナビゲーション */}
           <Command.Group heading="ページ" className="p-2">
             <CommandItem
               onSelect={() => runCommand(() => router.push('/'))}
@@ -89,7 +125,7 @@ export function CommandMenu() {
             </CommandItem>
           </Command.Group>
 
-          {/* 今後、AIツールのデータを検索可能にする */}
+          {/* アクション */}
           <Command.Group heading="アクション" className="p-2">
             <CommandItem
               onSelect={() => runCommand(() => router.push('/tools/new'))}
@@ -98,6 +134,27 @@ export function CommandMenu() {
               新しいツールを作成
             </CommandItem>
           </Command.Group>
+
+          {/* 検索結果: AIツール */}
+          {searchResults.length > 0 && (
+            <Command.Group heading="AIツール" className="p-2">
+              {searchResults.map((tool) => (
+                <CommandItem
+                  key={tool.id}
+                  onSelect={() => runCommand(() => router.push(`/tools/${tool.id}`))}
+                  icon={Wrench}
+                >
+                  <div className="flex flex-col gap-1 overflow-hidden">
+                    <span className="font-medium truncate">{tool.tool_name}</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {tool.category} • {tool.usage_purpose.slice(0, 50)}
+                      {tool.usage_purpose.length > 50 ? '...' : ''}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
+            </Command.Group>
+          )}
         </Command.List>
       </Command.Dialog>
 

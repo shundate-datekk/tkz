@@ -52,6 +52,7 @@ export function PromptForm({
       style: "",
       duration: "",
       additionalRequirements: "",
+      outputLanguage: "ja",
     },
   });
 
@@ -77,6 +78,36 @@ export function PromptForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, handleFormError)} className="space-y-6">
+        {/* プロンプトの言語 */}
+        <FormField
+          control={form.control}
+          name="outputLanguage"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>プロンプトの言語 *</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isFormDisabled}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="言語を選択してください" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="ja">日本語</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                生成されるプロンプトの言語を選択してください
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         {/* 目的 */}
         <FormField
           control={form.control}

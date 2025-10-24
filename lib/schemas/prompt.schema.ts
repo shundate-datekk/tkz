@@ -24,6 +24,11 @@ export const generatePromptSchema = z.object({
     .string()
     .max(500, "その他の要望は500文字以内で入力してください")
     .optional(),
+  outputLanguage: z
+    .enum(["ja", "en"], {
+      errorMap: () => ({ message: "日本語または英語を選択してください" }),
+    })
+    .default("ja"),
 });
 
 /**
@@ -38,6 +43,7 @@ export const promptHistorySchema = z.object({
   prompt_text: z.string().min(1, "プロンプトテキストは必須です"),
   input_parameters: z.record(z.string(), z.any()),
   created_by: z.string().uuid("無効なユーザーIDです"),
+  output_language: z.enum(["ja", "en"]).optional().default("ja"),
 });
 
 /**
@@ -51,6 +57,7 @@ export interface PromptHistory {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  output_language: string;
 }
 
 /**

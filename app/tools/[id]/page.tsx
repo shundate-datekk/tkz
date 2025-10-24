@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { userRepository } from "@/lib/repositories/user-repository";
 import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/layout/navbar";
 import { ToolDeleteButton } from "@/components/tools/tool-delete-button";
@@ -60,6 +61,16 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
 
       {/* Main Content */}
       <div className="container mx-auto max-w-4xl px-4 py-8">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'ホーム', href: '/' },
+            { label: 'AIツール一覧', href: '/tools' },
+            { label: tool.tool_name },
+          ]}
+          className="mb-4"
+        />
+
         <div className="mb-6 flex items-center gap-4">
           <Button asChild variant="outline">
             <Link href="/tools">← 一覧に戻る</Link>

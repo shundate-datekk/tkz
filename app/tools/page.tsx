@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { userRepository } from "@/lib/repositories/user-repository";
 import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Navbar } from "@/components/layout/navbar";
 import { ToolsList } from "@/components/tools/tools-list";
 
@@ -48,6 +49,15 @@ export default async function ToolsPage() {
       <Navbar userName={session.user.name ?? undefined} />
 
       <main className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'ホーム', href: '/' },
+            { label: 'AIツール一覧' },
+          ]}
+          className="mb-4"
+        />
+
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">AIツール一覧</h1>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useSwipeGesture } from "@/lib/hooks/use-swipe-gesture";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Wrench, Sparkles, History, Menu } from "lucide-react";
+import { Home, Wrench, Sparkles, History, Menu, Settings } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -43,11 +44,22 @@ const navItems = [
     href: "/history",
     icon: History,
   },
+  {
+    name: "設定",
+    href: "/settings",
+    icon: Settings,
+  },
 ];
 
 export function Navbar({ userName }: NavbarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  // スワイプジェスチャーでメニューを閉じる
+  const swipeHandlers = useSwipeGesture({
+    onSwipeRight: () => setIsOpen(false),
+    threshold: 50, // 50px以上のスワイプで反応
+  });
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -111,7 +123,7 @@ export function Navbar({ userName }: NavbarProps) {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[350px]">
+            <SheetContent side="right" className="w-[350px]" {...swipeHandlers}>
               <SheetHeader>
                 <SheetTitle>メニュー</SheetTitle>
                 <SheetDescription>

@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { LikeButton } from "@/components/tools/like-button";
 import { likeToolAction, unlikeToolAction } from "@/lib/actions/like.actions";
 import type { AITool } from "@/lib/schemas/ai-tool.schema";
@@ -20,6 +21,9 @@ interface ToolCardProps {
   currentUserId: string;
   likeCount?: number;
   userHasLiked?: boolean;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
 }
 
 export function ToolCard({ 
@@ -28,6 +32,9 @@ export function ToolCard({
   currentUserId,
   likeCount = 0,
   userHasLiked = false,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelection,
 }: ToolCardProps) {
   const isOwner = tool.created_by === currentUserId;
 
@@ -42,9 +49,21 @@ export function ToolCard({
   });
 
   return (
-    <Card animated className="flex flex-col">
+    <Card 
+      animated 
+      className={`flex flex-col ${selectionMode ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-primary bg-primary/5' : ''}`}
+      onClick={selectionMode ? onToggleSelection : undefined}
+    >
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
+          {selectionMode && (
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={onToggleSelection}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1"
+            />
+          )}
           <div className="flex-1">
             <CardTitle className="line-clamp-1">{tool.tool_name}</CardTitle>
             <CardDescription className="mt-1">

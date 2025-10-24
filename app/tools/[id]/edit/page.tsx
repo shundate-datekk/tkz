@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { ToolEditForm } from "@/components/tools/tool-edit-form";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Navbar } from "@/components/layout/navbar";
 
 interface ToolEditPageProps {
@@ -52,6 +53,17 @@ export default async function ToolEditPage({ params }: ToolEditPageProps) {
 
       {/* Main Content */}
       <div className="container mx-auto max-w-2xl px-4 py-8">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'ホーム', href: '/' },
+            { label: 'AIツール一覧', href: '/tools' },
+            { label: tool.tool_name, href: `/tools/${tool.id}` },
+            { label: '編集' },
+          ]}
+          className="mb-4"
+        />
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold">AIツール編集</h1>
           <p className="mt-2 text-muted-foreground">

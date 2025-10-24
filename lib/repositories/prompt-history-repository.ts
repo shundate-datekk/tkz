@@ -22,6 +22,7 @@ class PromptHistoryRepository {
           prompt_text: input.prompt_text,
           input_parameters: input.input_parameters,
           created_by: input.created_by,
+          output_language: input.output_language || "ja",
         },
       ])
       .select()

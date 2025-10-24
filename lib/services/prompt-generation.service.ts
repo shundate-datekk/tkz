@@ -21,6 +21,7 @@ import {
 export interface PromptGenerationResult {
   promptText: string;
   inputParameters: Record<string, any>;
+  outputLanguage: "ja" | "en";
 }
 
 /**
@@ -46,6 +47,7 @@ class PromptGenerationService {
         style: validatedInput.style,
         duration: validatedInput.duration,
         additionalRequirements: validatedInput.additionalRequirements,
+        outputLanguage: validatedInput.outputLanguage,
       });
 
       // 3. 生成結果の検証
@@ -59,6 +61,7 @@ class PromptGenerationService {
       return success({
         promptText,
         inputParameters: validatedInput,
+        outputLanguage: validatedInput.outputLanguage,
       });
     } catch (error) {
       console.error("Prompt generation error:", error);

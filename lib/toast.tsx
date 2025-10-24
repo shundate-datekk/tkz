@@ -1,4 +1,5 @@
 import { toast as sonnerToast } from "sonner"
+import { SuccessCheckmarkSmall } from "@/components/ui/success-checkmark"
 
 /**
  * Toast通知の統一ラッパー関数
@@ -27,6 +28,7 @@ export function success(message: string, options?: ToastOptions) {
     description: options?.description,
     duration: options?.duration ?? 3000, // デフォルト3秒
     action: options?.action,
+    icon: <SuccessCheckmarkSmall />,
     classNames: {
       toast: "border-primary/20 bg-background",
       title: "text-primary font-semibold",
