@@ -60,9 +60,39 @@ export interface VideoPromptParams {
 }
 
 /**
+ * Chat Completions APIのパラメータ型
+ */
+export interface ChatCompletionParams {
+  model: string;
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: { type: 'json_object' | 'text' };
+}
+
+/**
  * OpenAIクライアント
  */
 export class OpenAIClient {
+  /**
+   * Chat Completions APIを呼び出す（汎用）
+   * @param params Chat Completionsパラメータ
+   * @returns OpenAI API レスポンス
+   */
+  async chat(params: ChatCompletionParams): Promise<any> {
+    return withRetry(async () => {
+      const completion = await openai.chat.completions.create({
+        model: params.model,
+        messages: params.messages,
+        temperature: params.temperature ?? 0.7,
+        max_tokens: params.max_tokens ?? 500,
+        ...(params.response_format && { response_format: params.response_format }),
+      });
+
+      return completion;
+    });
+  }
+
   /**
    * Sora2用の動画プロンプトを生成
    * @param params プロンプト生成パラメータ
@@ -93,6 +123,139 @@ export class OpenAIClient {
 
       return generatedPrompt;
     });
+  }
+
+  /**
+   * 複数のバリエーションを一度に生成
+   * @param params プロンプト生成パラメータ
+   * @param count 生成するバリエーション数（デフォルト: 3）
+   * @returns 生成されたプロンプトの配列
+   */
+  async generateVideoPromptVariations(
+    params: VideoPromptParams,
+    count: number = 3
+  ): Promise<string[]> {
+    return withRetry(async () => {
+      const outputLanguage = params.outputLanguage || "ja";
+      const systemPrompt = this.buildSystemPromptForVariations(outputLanguage, count);
+      const userPrompt = this.buildUserPrompt(params);
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.8, // より多様性を持たせるため高めに設定
+        max_tokens: 1500, // 複数生成するため増やす
+      });
+
+      const generatedContent = completion.choices[0]?.message?.content?.trim();
+
+      if (!generatedContent) {
+        throw new Error("バリエーションの生成に失敗しました");
+      }
+
+      // レスポンスを番号付きリストで分割
+      const variations = this.parseVariations(generatedContent, count);
+
+      if (variations.length === 0) {
+        throw new Error("バリエーションの解析に失敗しました");
+      }
+
+      return variations;
+    });
+  }
+
+  /**
+   * バリエーション生成用のSystem Promptを構築
+   */
+  private buildSystemPromptForVariations(language: "ja" | "en", count: number): string {
+    const basePrompt = `You are an expert at creating video generation prompts for Sora2 (OpenAI's video generation AI).
+Based on user requirements, create ${count} different variations of effective video generation prompts.`;
+
+    const guidelines = {
+      ja: `
+プロンプト作成のガイドライン:
+- ${count}つの異なるバリエーションを生成してください
+- 各バリエーションは具体的で詳細な視覚的描写を含める
+- カメラアングル、照明、雰囲気を明確に指定
+- 動きや時間の流れを記述
+- 色彩やスタイルを具体的に表現
+- 各プロンプトは150-300文字程度で簡潔に
+- 日本語で出力すること
+- 各バリエーションは異なる視点やアプローチを取ること（例：カメラアングルを変える、時間帯を変える、雰囲気を変える）
+
+出力形式:
+1. [1つ目のプロンプト]
+2. [2つ目のプロンプト]
+3. [3つ目のプロンプト]
+
+番号付きリスト形式で出力し、それぞれのプロンプトは改行で区切ってください。説明文は含めず、プロンプトのみを出力してください。`,
+      en: `
+Prompt creation guidelines:
+- Generate ${count} different variations
+- Each variation should include specific and detailed visual descriptions
+- Clearly specify camera angles, lighting, and atmosphere
+- Describe movement and the flow of time
+- Express colors and style concretely
+- Keep each prompt concise at around 150-300 words
+- Output in English
+- Each variation should take a different perspective or approach (e.g., change camera angle, time of day, atmosphere)
+
+Output format:
+1. [First prompt]
+2. [Second prompt]
+3. [Third prompt]
+
+Output in numbered list format, separating each prompt with a line break. Do not include explanatory text, output only the prompts.`,
+    };
+
+    return `${basePrompt}
+${guidelines[language]}`;
+  }
+
+  /**
+   * バリエーションテキストを解析して配列に分割
+   */
+  private parseVariations(content: string, expectedCount: number): string[] {
+    // 番号付きリスト形式で分割
+    const lines = content.split('\n').filter(line => line.trim());
+    const variations: string[] = [];
+
+    let currentVariation = '';
+    
+    for (const line of lines) {
+      // 番号付きリストのパターン: "1.", "2.", "3." など
+      const match = line.match(/^(\d+)[\.\)]\s*(.+)$/);
+      
+      if (match) {
+        // 新しいバリエーションの開始
+        if (currentVariation) {
+          variations.push(currentVariation.trim());
+        }
+        currentVariation = match[2];
+      } else if (currentVariation) {
+        // 前のバリエーションの続き
+        currentVariation += '\n' + line;
+      }
+    }
+
+    // 最後のバリエーションを追加
+    if (currentVariation) {
+      variations.push(currentVariation.trim());
+    }
+
+    // もし期待される数に満たない場合、分割方法を変える
+    if (variations.length < expectedCount) {
+      // 改行で分割してみる
+      const parts = content.split(/\n\n+/).filter(p => p.trim());
+      if (parts.length >= expectedCount) {
+        return parts.slice(0, expectedCount).map(p => p.replace(/^\d+[\.\)]\s*/, '').trim());
+      }
+    }
+
+    return variations.slice(0, expectedCount);
   }
 
   /**

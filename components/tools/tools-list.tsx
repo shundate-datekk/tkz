@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { ToolCard } from "@/components/tools/tool-card";
 import { ToolSearchInput } from "@/components/tools/tool-search-input";
+import { AdvancedSearchPanel } from "@/components/tools/advanced-search-panel";
+import { TagFilter } from "@/components/tools/tag-filter";
 import {
   type AITool,
   TOOL_CATEGORIES,
@@ -33,21 +35,32 @@ import {
   type SortOrder,
 } from "@/lib/schemas/ai-tool.schema";
 import { useDebounce } from "@/lib/hooks/use-debounce";
+import { SearchService } from "@/lib/services/search.service";
+import type { AdvancedSearchConditions } from "@/lib/types/search";
 
 interface ToolsListProps {
   tools: AITool[];
   userMap: Map<string, string>;
   currentUserId: string;
+  savedSearchConditions?: AdvancedSearchConditions | null;
 }
 
 type SortOption = `${AIToolSortBy}-${SortOrder}`;
 
-export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
+export function ToolsList({ tools, userMap, currentUserId, savedSearchConditions }: ToolsListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortOption, setSortOption] = useState<SortOption>("usage_date-desc");
   const [isSearching, setIsSearching] = useState(false);
-  
+
+  // 高度な検索機能の状態
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [advancedSearchConditions, setAdvancedSearchConditions] = useState<AdvancedSearchConditions | null>(null);
+  const searchService = useMemo(() => new SearchService(), []);
+
+  // タグフィルタリングの状態
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   // 複数選択機能の状態
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
@@ -66,32 +79,120 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
     }
   }, [searchQuery, debouncedSearchQuery]);
 
+  // 高度な検索のハンドラー
+  const handleAdvancedSearch = async (conditions: AdvancedSearchConditions) => {
+    setAdvancedSearchConditions(conditions);
+  };
+
+  // 保存済み検索が適用されたときに検索条件を更新
+  useEffect(() => {
+    if (savedSearchConditions) {
+      setAdvancedSearchConditions(savedSearchConditions);
+      setShowAdvancedSearch(true);
+    }
+  }, [savedSearchConditions]);
+
   // フィルタリングとソート処理
   const filteredAndSortedTools = useMemo(() => {
     let result = [...tools];
 
-    // 1. 検索フィルタ: ツール名、使用目的、使用感で検索（大文字小文字を区別しない）
-    if (debouncedSearchQuery.trim()) {
-      const query = debouncedSearchQuery.toLowerCase();
-      result = result.filter((tool) => {
-        const toolName = tool.tool_name.toLowerCase();
-        const usagePurpose = tool.usage_purpose.toLowerCase();
-        const userExperience = tool.user_experience.toLowerCase();
+    // 高度な検索が有効な場合
+    if (advancedSearchConditions) {
+      const searchResult = searchService.advancedSearch(
+        advancedSearchConditions,
+        tools.map(tool => ({
+          id: tool.id,
+          tool_name: tool.tool_name,
+          category: tool.category,
+          rating: tool.rating,
+          created_at: tool.created_at,
+          usage_date: tool.usage_date,
+        }))
+      );
 
-        return (
-          toolName.includes(query) ||
-          usagePurpose.includes(query) ||
-          userExperience.includes(query)
-        );
+      // 同期的に実行（既にクライアント側のデータ）
+      Promise.resolve(searchResult).then(res => {
+        if (res.success) {
+          const toolIds = new Set(res.data.map(t => t.id));
+          result = tools.filter(t => toolIds.has(t.id));
+        }
       });
+
+      // 即座に適用するために同期処理
+      const syncResult = tools.filter(tool => {
+        if (!advancedSearchConditions.keyword &&
+            (!advancedSearchConditions.category || advancedSearchConditions.category.length === 0) &&
+            !advancedSearchConditions.ratingRange &&
+            !advancedSearchConditions.dateRange) {
+          return true;
+        }
+
+        let matches = advancedSearchConditions.operator === 'AND';
+
+        if (advancedSearchConditions.keyword) {
+          const keywordMatch = tool.tool_name.toLowerCase().includes(advancedSearchConditions.keyword.toLowerCase());
+          matches = advancedSearchConditions.operator === 'AND' ? matches && keywordMatch : matches || keywordMatch;
+        }
+
+        if (advancedSearchConditions.category && advancedSearchConditions.category.length > 0) {
+          const categoryMatch = advancedSearchConditions.category.includes(tool.category);
+          matches = advancedSearchConditions.operator === 'AND' ? matches && categoryMatch : matches || categoryMatch;
+        }
+
+        if (advancedSearchConditions.ratingRange) {
+          const ratingMatch = tool.rating >= advancedSearchConditions.ratingRange.min &&
+                              tool.rating <= advancedSearchConditions.ratingRange.max;
+          matches = advancedSearchConditions.operator === 'AND' ? matches && ratingMatch : matches || ratingMatch;
+        }
+
+        if (advancedSearchConditions.dateRange) {
+          const toolDate = new Date(tool.created_at);
+          const dateMatch = toolDate >= advancedSearchConditions.dateRange.start &&
+                           toolDate <= advancedSearchConditions.dateRange.end;
+          matches = advancedSearchConditions.operator === 'AND' ? matches && dateMatch : matches || dateMatch;
+        }
+
+        return matches;
+      });
+
+      result = syncResult;
+    }
+    // 通常の検索とフィルタ
+    else {
+      // 1. 検索フィルタ: ツール名、使用目的、使用感で検索（大文字小文字を区別しない）
+      if (debouncedSearchQuery.trim()) {
+        const query = debouncedSearchQuery.toLowerCase();
+        result = result.filter((tool) => {
+          const toolName = tool.tool_name.toLowerCase();
+          const usagePurpose = tool.usage_purpose.toLowerCase();
+          const userExperience = tool.user_experience.toLowerCase();
+
+          return (
+            toolName.includes(query) ||
+            usagePurpose.includes(query) ||
+            userExperience.includes(query)
+          );
+        });
+      }
+
+      // 2. カテゴリフィルタ
+      if (selectedCategory !== "all") {
+        result = result.filter((tool) => tool.category === selectedCategory);
+      }
+
+      // 3. タグフィルタ（選択されたタグがすべて含まれるツールのみ表示）
+      if (selectedTags.length > 0) {
+        result = result.filter((tool) => {
+          if (!tool.tags || tool.tags.length === 0) return false;
+          // 選択されたすべてのタグが含まれているかチェック（大文字小文字を区別しない）
+          return selectedTags.every((selectedTag) =>
+            tool.tags!.some((toolTag) => toolTag.toLowerCase() === selectedTag.toLowerCase())
+          );
+        });
+      }
     }
 
-    // 2. カテゴリフィルタ
-    if (selectedCategory !== "all") {
-      result = result.filter((tool) => tool.category === selectedCategory);
-    }
-
-    // 3. ソート処理
+    // 4. ソート処理
     const [sortBy, sortOrder] = sortOption.split("-") as [
       AIToolSortBy,
       SortOrder,
@@ -120,7 +221,7 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
     });
 
     return result;
-  }, [tools, debouncedSearchQuery, selectedCategory, sortOption]);
+  }, [tools, debouncedSearchQuery, selectedCategory, sortOption, advancedSearchConditions, searchService, selectedTags]);
 
   // 複数選択のハンドラー
   const handleToggleSelection = (toolId: string) => {
@@ -214,7 +315,16 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
     <div className="space-y-6">
       {/* 検索ボックスとローディング表示 */}
       <div className="space-y-2">
-        <ToolSearchInput value={searchQuery} onChange={setSearchQuery} />
+        <div className="flex items-center gap-2">
+          <ToolSearchInput value={searchQuery} onChange={setSearchQuery} className="flex-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+          >
+            {showAdvancedSearch ? '通常検索' : '高度な検索'}
+          </Button>
+        </div>
         {isSearching && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -222,6 +332,14 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
           </div>
         )}
       </div>
+
+      {/* 高度な検索パネル */}
+      {showAdvancedSearch && (
+        <AdvancedSearchPanel
+          onSearch={handleAdvancedSearch}
+          resultCount={filteredAndSortedTools.length}
+        />
+      )}
 
       {/* 選択モード切り替えと選択状態表示 */}
       {!selectionMode ? (
@@ -299,6 +417,9 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
             </Select>
           </div>
 
+          {/* タグフィルタ */}
+          <TagFilter selectedTags={selectedTags} onTagsChange={setSelectedTags} />
+
           {/* ソート */}
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">並び順:</label>
@@ -320,7 +441,7 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
 
         {/* 件数表示 */}
         <p className="text-sm text-muted-foreground">
-          {debouncedSearchQuery || selectedCategory !== "all"
+          {debouncedSearchQuery || selectedCategory !== "all" || selectedTags.length > 0
             ? `表示中: ${filteredAndSortedTools.length}件 / 全${tools.length}件`
             : `登録されているAIツール: ${tools.length}件`}
         </p>
@@ -330,11 +451,11 @@ export function ToolsList({ tools, userMap, currentUserId }: ToolsListProps) {
       {filteredAndSortedTools.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="mb-4 text-muted-foreground">
-            {debouncedSearchQuery || selectedCategory !== "all"
+            {debouncedSearchQuery || selectedCategory !== "all" || selectedTags.length > 0
               ? "条件に一致するツールが見つかりませんでした"
               : "まだツールが登録されていません"}
           </p>
-          {!debouncedSearchQuery && selectedCategory === "all" && (
+          {!debouncedSearchQuery && selectedCategory === "all" && selectedTags.length === 0 && (
             <Button asChild>
               <Link href="/tools/new">最初のツールを登録する</Link>
             </Button>

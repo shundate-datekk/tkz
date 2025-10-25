@@ -19,7 +19,7 @@ export function LoadingSpinner({
   text,
 }: LoadingSpinnerProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2">
+    <div className="flex flex-col items-center justify-center gap-2" data-testid="loading-spinner">
       <Loader2
         className={cn("animate-spin text-primary", sizeClasses[size], className)}
       />

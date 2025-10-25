@@ -75,6 +75,42 @@ export async function regeneratePromptAction(
 }
 
 /**
+ * プロンプトバリエーション生成のServer Action
+ */
+export async function generatePromptVariationsAction(
+  input: GeneratePromptInput,
+  count: number = 3
+): Promise<ActionResult<{ variations: Array<{ promptText: string; inputParameters: any }> }>> {
+  try {
+    const result = await promptGenerationService.generatePromptVariations(input, count);
+
+    if (!result.success) {
+      const error = result.error as AppError;
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: {
+        variations: result.data.map((variation) => ({
+          promptText: variation.promptText,
+          inputParameters: variation.inputParameters,
+        })),
+      },
+    };
+  } catch (error) {
+    console.error("Generate prompt variations action error:", error);
+    return {
+      success: false,
+      error: "バリエーションの生成中にエラーが発生しました",
+    };
+  }
+}
+
+/**
  * プロンプト履歴保存のServer Action
  */
 export async function savePromptHistoryAction(
@@ -152,6 +188,74 @@ export async function deletePromptHistoryAction(
     return {
       success: false,
       error: "プロンプト履歴の削除中にエラーが発生しました",
+    };
+  }
+}
+
+/**
+ * プロンプト履歴取得のServer Action
+ */
+export async function getPromptHistoriesAction(options?: {
+  limit?: number;
+  offset?: number;
+  orderBy?: "created_at" | "updated_at";
+  order?: "asc" | "desc";
+}): Promise<ActionResult<any[]>> {
+  try {
+    const result = await promptHistoryService.getAllPromptHistories(options);
+
+    if (!result.success) {
+      const error = result.error as AppError;
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error("Get prompt histories action error:", error);
+    return {
+      success: false,
+      error: "プロンプト履歴の取得中にエラーが発生しました",
+    };
+  }
+}
+
+/**
+ * プロンプト履歴検索のServer Action
+ */
+export async function searchPromptHistoriesAction(
+  keyword: string,
+  options?: {
+    userId?: string;
+    limit?: number;
+    offset?: number;
+  }
+): Promise<ActionResult<any[]>> {
+  try {
+    const result = await promptHistoryService.searchPromptHistories(keyword, options);
+
+    if (!result.success) {
+      const error = result.error as AppError;
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error("Search prompt histories action error:", error);
+    return {
+      success: false,
+      error: "プロンプト履歴の検索中にエラーが発生しました",
     };
   }
 }

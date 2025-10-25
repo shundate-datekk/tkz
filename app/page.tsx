@@ -2,11 +2,22 @@ import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
+import { ActivityFeed } from "@/components/activity/activity-feed";
+import { getActivityFeedAction } from "@/lib/actions/activity-feed.actions";
 import { Wrench, Plus, Sparkles, History } from "lucide-react";
 import Link from "next/link";
 
 export default async function Home() {
   const session = await auth();
+
+  // 活動フィードを取得
+  let activities = [];
+  if (session?.user) {
+    const activitiesResult = await getActivityFeedAction(10);
+    if (activitiesResult.success) {
+      activities = activitiesResult.data;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,11 +35,13 @@ export default async function Home() {
           </p>
 
           {session?.user ? (
-            <div className="mt-12 w-full max-w-2xl">
-              <p className="mb-8 text-sm text-muted-foreground">
+            <div className="mt-12 w-full max-w-4xl space-y-8">
+              <p className="text-sm text-muted-foreground">
                 ようこそ、{session.user.name}さん
               </p>
-              <div className="grid gap-4 sm:grid-cols-2">
+
+              {/* クイックアクションボタン */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <Button asChild size="lg" className="w-full">
                   <Link href="/tools">
                     <Wrench className="mr-2 h-5 w-5" />
@@ -54,6 +67,9 @@ export default async function Home() {
                   </Link>
                 </Button>
               </div>
+
+              {/* 活動フィード */}
+              <ActivityFeed activities={activities} />
             </div>
           ) : (
             <div className="mt-12">

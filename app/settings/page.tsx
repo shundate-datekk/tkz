@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DataExport } from "@/components/settings/data-export";
 import { DataImport } from "@/components/settings/data-import";
+import { DataBackup } from "@/components/settings/data-backup";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -44,6 +45,9 @@ export default async function SettingsPage() {
 
         {/* データインポート */}
         <DataImport />
+
+        {/* データバックアップ */}
+        <DataBackup />
       </div>
     </div>
   );

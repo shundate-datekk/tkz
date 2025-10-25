@@ -112,6 +112,86 @@ class PromptGenerationService {
   }
 
   /**
+   * 複数のバリエーションを一度に生成
+   * @param originalInput 元の入力パラメータ
+   * @param count 生成するバリエーション数（デフォルト: 3、最大: 5）
+   * @returns バリエーション生成結果の配列
+   */
+  async generatePromptVariations(
+    originalInput: GeneratePromptInput,
+    count: number = 3
+  ): Promise<Result<PromptGenerationResult[], AppError>> {
+    try {
+      // バリデーション
+      const validatedInput = generatePromptSchema.parse(originalInput);
+      
+      // バリエーション数を3-5の範囲に制限
+      const variationCount = Math.min(Math.max(count, 3), 5);
+
+      // OpenAI APIを使用して複数バリエーションを生成
+      const promptTexts = await openaiClient.generateVideoPromptVariations(
+        {
+          purpose: validatedInput.purpose,
+          sceneDescription: validatedInput.sceneDescription,
+          style: validatedInput.style,
+          duration: validatedInput.duration,
+          additionalRequirements: validatedInput.additionalRequirements,
+          outputLanguage: validatedInput.outputLanguage,
+        },
+        variationCount
+      );
+
+      // 生成結果の検証
+      if (!promptTexts || promptTexts.length === 0) {
+        return failure(
+          openaiError("バリエーションの生成に失敗しました。もう一度お試しください")
+        );
+      }
+
+      // 各プロンプトを結果オブジェクトに変換
+      const results: PromptGenerationResult[] = promptTexts.map((promptText) => ({
+        promptText,
+        inputParameters: validatedInput,
+        outputLanguage: validatedInput.outputLanguage,
+      }));
+
+      return success(results);
+    } catch (error) {
+      console.error("Prompt variations generation error:", error);
+
+      // Zodバリデーションエラー
+      if (error instanceof ZodError) {
+        return failure(validationError("入力データが不正です", error.issues));
+      }
+
+      // OpenAI APIエラー
+      if (error && typeof error === "object" && "status" in error) {
+        const apiError = error as any;
+
+        // レート制限エラー
+        if (apiError.status === 429) {
+          return failure(rateLimitError());
+        }
+
+        // その他のAPIエラー
+        return failure(
+          openaiError(
+            apiError.message || "AI処理中にエラーが発生しました",
+            { status: apiError.status }
+          )
+        );
+      }
+
+      // その他のエラー
+      return failure(
+        serverError(
+          error instanceof Error ? error.message : "予期しないエラーが発生しました"
+        )
+      );
+    }
+  }
+
+  /**
    * Few-shot examplesを使用した高度なプロンプト生成
    * （将来的な拡張用）
    */

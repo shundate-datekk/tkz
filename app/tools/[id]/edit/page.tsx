@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
+import { getTagsByToolIdAction } from "@/lib/actions/tag.actions";
 import { ToolEditForm } from "@/components/tools/tool-edit-form";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Navbar } from "@/components/layout/navbar";
@@ -43,6 +44,12 @@ export default async function ToolEditPage({ params }: ToolEditPageProps) {
   }
 
   const tool = toolResult.data;
+
+  // タグを取得
+  const tagsResult = await getTagsByToolIdAction(id);
+  if (tagsResult.success) {
+    tool.tags = tagsResult.data.map((tag) => tag.name);
+  }
 
   // 所有者かどうかをチェック
   const isOwner = tool.created_by === session.user.id;

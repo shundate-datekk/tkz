@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Save, RefreshCw, Sparkles } from "lucide-react";
+import { Copy, Check, Save, RefreshCw, Sparkles, Wand2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,8 +18,10 @@ interface PromptResultDialogProps {
   prompt: string;
   onSave: () => Promise<void>;
   onRegenerate: () => Promise<void>;
+  onGenerateVariations: () => Promise<void>;
   isSaving: boolean;
   isRegenerating: boolean;
+  isGeneratingVariations: boolean;
   isSaved: boolean;
 }
 
@@ -29,8 +31,10 @@ export function PromptResultDialog({
   prompt,
   onSave,
   onRegenerate,
+  onGenerateVariations,
   isSaving,
   isRegenerating,
+  isGeneratingVariations,
   isSaved,
 }: PromptResultDialogProps) {
   const [isCopied, setIsCopied] = useState(false);
@@ -114,16 +118,28 @@ export function PromptResultDialog({
               )}
             </Button>
           </div>
-          <Button
-            variant="secondary"
-            onClick={onRegenerate}
-            disabled={isRegenerating}
-            size="lg"
-            className="w-full"
-          >
-            <RefreshCw className={`mr-2 h-5 w-5 ${isRegenerating ? 'animate-spin' : ''}`} />
-            {isRegenerating ? "再生成中..." : "別のバリエーションを生成"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              size="lg"
+              className="flex-1"
+            >
+              <RefreshCw className={`mr-2 h-5 w-5 ${isRegenerating ? 'animate-spin' : ''}`} />
+              {isRegenerating ? "再生成中..." : "別のバリエーションを生成"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onGenerateVariations}
+              disabled={isGeneratingVariations}
+              size="lg"
+              className="flex-1"
+            >
+              <Wand2 className={`mr-2 h-5 w-5 ${isGeneratingVariations ? 'animate-pulse' : ''}`} />
+              {isGeneratingVariations ? "生成中..." : "3つのバリエーション"}
+            </Button>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-2">

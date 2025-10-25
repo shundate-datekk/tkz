@@ -32,6 +32,7 @@ export const aiToolSchema = z.object({
     },
     { message: "有効な日付を入力してください" }
   ),
+  tags: z.array(z.string()).optional(),
 });
 
 /**
@@ -59,6 +60,7 @@ export interface AITool {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  tags?: string[]; // タグ名の配列（オプショナル）
 }
 
 /**

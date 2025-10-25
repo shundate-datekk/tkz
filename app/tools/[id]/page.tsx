@@ -4,11 +4,15 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { userRepository } from "@/lib/repositories/user-repository";
+import { commentRepository } from "@/lib/repositories/comment-repository";
+import { getTagsByToolIdAction } from "@/lib/actions/tag.actions";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/layout/navbar";
 import { ToolDeleteButton } from "@/components/tools/tool-delete-button";
+import { CommentSection } from "@/components/tools/comment-section";
 
 interface ToolDetailPageProps {
   params: Promise<{ id: string }>;
@@ -48,9 +52,19 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
 
   const tool = toolResult.data;
 
+  // タグを取得
+  const tagsResult = await getTagsByToolIdAction(id);
+  if (tagsResult.success) {
+    tool.tags = tagsResult.data.map((tag) => tag.name);
+  }
+
   // 作成者情報を取得
   const creator = await userRepository.findById(tool.created_by);
   const isOwner = tool.created_by === session.user.id;
+
+  // コメント一覧を取得
+  const commentsResult = await commentRepository.findByToolId(id);
+  const comments = commentsResult.success ? commentsResult.data : [];
 
   // 星評価
   const stars = "⭐".repeat(tool.rating);
@@ -93,7 +107,7 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
-              <div>
+              <div className="flex-1">
                 <CardTitle className="text-3xl">{tool.tool_name}</CardTitle>
                 <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="rounded-full bg-secondary px-3 py-1">
@@ -101,6 +115,16 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
                   </span>
                   <span>{stars}</span>
                 </div>
+                {/* タグ表示 */}
+                {tool.tags && tool.tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {tool.tags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -167,6 +191,13 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* コメントセクション */}
+        <CommentSection
+          toolId={tool.id}
+          initialComments={comments}
+          currentUserId={session.user.id}
+        />
       </div>
     </div>
   );

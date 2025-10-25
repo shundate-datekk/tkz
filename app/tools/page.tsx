@@ -4,10 +4,11 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { userRepository } from "@/lib/repositories/user-repository";
+import { getTagsByToolIdsAction } from "@/lib/actions/tag.actions";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Navbar } from "@/components/layout/navbar";
-import { ToolsList } from "@/components/tools/tools-list";
+import { ToolsPageClient } from "@/components/tools/tools-page-client";
 
 export const metadata: Metadata = {
   title: "AIツール一覧 | AI Tools & Sora Prompt Generator",
@@ -40,6 +41,17 @@ export default async function ToolsPage() {
 
   const tools = toolsResult.data;
 
+  // 各ツールのタグを取得
+  const toolIds = tools.map((tool) => tool.id);
+  const tagsResult = await getTagsByToolIdsAction(toolIds);
+
+  // ツールにタグを追加
+  if (tagsResult.success) {
+    tools.forEach((tool) => {
+      tool.tags = tagsResult.data.get(tool.id) || [];
+    });
+  }
+
   // ユーザー情報を取得してマッピング
   const users = await userRepository.findAll();
   const userMap = new Map(users.map((u) => [u.id, u.display_name]));
@@ -67,7 +79,7 @@ export default async function ToolsPage() {
           </Button>
         </div>
 
-        <ToolsList
+        <ToolsPageClient
           tools={tools}
           userMap={userMap}
           currentUserId={session.user.id}

@@ -6,7 +6,8 @@ import { toast } from "@/lib/toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromptForm } from "@/components/prompt/prompt-form";
 import { PromptResultDialog } from "@/components/prompt/prompt-result-dialog";
-import { generatePromptAction, regeneratePromptAction, savePromptHistoryAction } from "@/lib/actions/prompt.actions";
+import { PromptVariationsDialog } from "@/components/prompt/prompt-variations-dialog";
+import { generatePromptAction, regeneratePromptAction, generatePromptVariationsAction, savePromptHistoryAction } from "@/lib/actions/prompt.actions";
 import type { GeneratePromptInput } from "@/lib/schemas/prompt.schema";
 
 export function PromptGenerator() {
@@ -18,6 +19,9 @@ export function PromptGenerator() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
+  const [variations, setVariations] = useState<Array<{ promptText: string; inputParameters: any }>>([]);
+  const [isVariationsDialogOpen, setIsVariationsDialogOpen] = useState(false);
 
   async function handleSubmit(data: GeneratePromptInput) {
     startTransition(async () => {
@@ -78,6 +82,40 @@ export function PromptGenerator() {
     }
   }
 
+  async function handleGenerateVariations() {
+    if (!lastInput) return;
+
+    setIsGeneratingVariations(true);
+    try {
+      const loadingToast = toast.loading("バリエーションを生成中...");
+
+      const result = await generatePromptVariationsAction(lastInput, 3);
+
+      toast.dismiss(loadingToast);
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      // バリエーションを保存
+      setVariations(result.data.variations);
+      
+      // 単一プロンプトダイアログを閉じる
+      setIsDialogOpen(false);
+      
+      // バリエーションダイアログを開く
+      setIsVariationsDialogOpen(true);
+      
+      toast.success(`${result.data.variations.length}つのバリエーションを生成しました！`);
+    } catch (error) {
+      console.error("Failed to generate variations:", error);
+      toast.error("バリエーションの生成中にエラーが発生しました");
+    } finally {
+      setIsGeneratingVariations(false);
+    }
+  }
+
   async function handleSave() {
     if (!generatedPrompt || !lastInput) return;
 
@@ -92,6 +130,27 @@ export function PromptGenerator() {
 
       toast.success("プロンプトを履歴に保存しました！");
       setIsSaved(true);
+    } catch (error) {
+      console.error("Failed to save prompt:", error);
+      toast.error("プロンプトの保存中にエラーが発生しました");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleSaveVariation(promptText: string) {
+    if (!lastInput) return;
+
+    setIsSaving(true);
+    try {
+      const result = await savePromptHistoryAction(promptText, lastInput, outputLanguage);
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success("プロンプトを履歴に保存しました！");
     } catch (error) {
       console.error("Failed to save prompt:", error);
       toast.error("プロンプトの保存中にエラーが発生しました");
@@ -140,9 +199,22 @@ export function PromptGenerator() {
           prompt={generatedPrompt}
           onSave={handleSave}
           onRegenerate={handleRegenerate}
+          onGenerateVariations={handleGenerateVariations}
           isSaving={isSaving}
           isRegenerating={isRegenerating}
+          isGeneratingVariations={isGeneratingVariations}
           isSaved={isSaved}
+        />
+      )}
+
+      {/* バリエーションダイアログ */}
+      {variations.length > 0 && (
+        <PromptVariationsDialog
+          open={isVariationsDialogOpen}
+          onOpenChange={setIsVariationsDialogOpen}
+          variations={variations}
+          onSave={handleSaveVariation}
+          isSaving={isSaving}
         />
       )}
     </>

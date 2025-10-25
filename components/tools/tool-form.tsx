@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TagInput } from "@/components/tags/tag-input";
 import {
   createAiToolSchema,
   type CreateAIToolInput,
@@ -52,6 +53,7 @@ export function ToolForm({
       user_experience: "",
       rating: 3,
       usage_date: new Date().toISOString().split("T")[0],
+      tags: [],
     },
   });
 
@@ -236,6 +238,26 @@ export function ToolForm({
           )}
           />
         </div>
+
+        {/* タグ */}
+        <FormField
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <FormItem>
+              <TagInput
+                value={field.value || []}
+                onChange={field.onChange}
+                label="タグ"
+                placeholder="タグを入力（カンマ区切り）"
+              />
+              <FormDescription>
+                ツールに関連するタグを追加してください（例: 文章生成, 画像編集, プログラミング）
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button type="submit" className="w-full" isLoading={isFormDisabled} disabled={isFormDisabled}>
           {isFormDisabled ? loadingText : submitButtonText}

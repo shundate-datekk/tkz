@@ -117,6 +117,7 @@ export function ToolEditForm({ tool, isOwner }: ToolEditFormProps) {
                 user_experience: tool.user_experience,
                 rating: tool.rating,
                 usage_date: tool.usage_date,
+                tags: tool.tags || [],
               }}
               submitButtonText="更新"
               loadingText="更新中..."

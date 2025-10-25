@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { getCurrentUserId } from "@/lib/auth/helpers";
+import { notifyToolCreated } from "@/lib/utils/notification-helper";
+import { createClient } from "@/lib/supabase/server";
+import { replaceToolTagsAction } from "@/lib/actions/tag.actions";
 import type {
   CreateAIToolInput,
   UpdateAIToolInput,
@@ -34,8 +37,53 @@ export async function createToolAction(
       };
     }
 
+    // タグを保存
+    if (input.tags && input.tags.length > 0) {
+      const tagResult = await replaceToolTagsAction(result.data.id, input.tags);
+      if (!tagResult.success) {
+        console.error('Failed to save tags:', tagResult.error);
+        // タグ保存の失敗はログのみで、ツール作成自体は成功として扱う
+      }
+    }
+
     // ツール一覧ページをキャッシュ再検証
     revalidatePath("/tools");
+
+    // 他のユーザーに通知を送信
+    try {
+      const supabase = await createClient();
+      
+      // 現在のユーザー情報を取得
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('display_name')
+        .eq('id', userId)
+        .single();
+
+      // 自分以外の全ユーザーを取得
+      const { data: otherUsers } = await supabase
+        .from('users')
+        .select('id')
+        .neq('id', userId);
+
+      if (currentUser && otherUsers && otherUsers.length > 0) {
+        // 各ユーザーに通知を送信
+        await Promise.all(
+          otherUsers.map((user) =>
+            notifyToolCreated({
+              toolId: result.data.id,
+              toolName: input.name,
+              authorId: userId,
+              authorName: currentUser.display_name || '不明なユーザー',
+              recipientId: user.id,
+            })
+          )
+        );
+      }
+    } catch (notificationError) {
+      // 通知の送信に失敗してもツール作成自体は成功として扱う
+      console.error('Failed to send notifications:', notificationError);
+    }
 
     return {
       success: true,
@@ -66,6 +114,15 @@ export async function updateToolAction(
         success: false,
         error: result.error.message,
       };
+    }
+
+    // タグを更新（tagsプロパティが指定されている場合のみ）
+    if (input.tags !== undefined) {
+      const tagResult = await replaceToolTagsAction(id, input.tags);
+      if (!tagResult.success) {
+        console.error('Failed to update tags:', tagResult.error);
+        // タグ更新の失敗はログのみで、ツール更新自体は成功として扱う
+      }
     }
 
     // ツール一覧とツール詳細ページをキャッシュ再検証

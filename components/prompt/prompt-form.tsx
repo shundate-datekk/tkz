@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,6 +29,7 @@ import {
   VIDEO_DURATIONS,
   VIDEO_STYLES,
 } from "@/lib/schemas/prompt.schema";
+import { PROMPT_TEMPLATES, getTemplateById } from "@/lib/constants/prompt-templates";
 
 interface PromptFormProps {
   onSubmit: (data: GeneratePromptInput) => Promise<void>;
@@ -43,6 +46,8 @@ export function PromptForm({
   submitButtonText = "プロンプトを生成",
   loadingText = "生成中...",
 }: PromptFormProps) {
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+
   const form = useForm<GeneratePromptInput>({
     resolver: zodResolver(generatePromptSchema),
     mode: "onBlur", // フォーカス離脱時にバリデーション
@@ -58,6 +63,31 @@ export function PromptForm({
 
   // 外部のisLoadingと内部のisSubmittingの両方を考慮
   const isFormDisabled = isLoading || form.formState.isSubmitting;
+
+  // テンプレート選択時の処理
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+
+    if (!templateId) return;
+
+    const template = getTemplateById(templateId);
+    if (!template) return;
+
+    // テンプレートのデフォルト値でフォームを更新
+    const { defaultValues: templateDefaults } = template;
+    if (templateDefaults.sceneDescription) {
+      form.setValue("sceneDescription", templateDefaults.sceneDescription);
+    }
+    if (templateDefaults.style) {
+      form.setValue("style", templateDefaults.style);
+    }
+    if (templateDefaults.duration) {
+      form.setValue("duration", templateDefaults.duration);
+    }
+    if (templateDefaults.additionalRequirements) {
+      form.setValue("additionalRequirements", templateDefaults.additionalRequirements);
+    }
+  };
 
   // エラー時に最初のエラーフィールドにフォーカス&スクロール
   const handleFormError = () => {
@@ -78,6 +108,36 @@ export function PromptForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, handleFormError)} className="space-y-6">
+        {/* テンプレート選択 */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">テンプレート（任意）</label>
+          <Select
+            value={selectedTemplate}
+            onValueChange={handleTemplateSelect}
+            disabled={isFormDisabled}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="テンプレートを選択してフォームを自動入力" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">テンプレートなし</SelectItem>
+              {PROMPT_TEMPLATES.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    <span>{template.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedTemplate && (
+            <p className="text-xs text-muted-foreground">
+              {PROMPT_TEMPLATES.find((t) => t.id === selectedTemplate)?.description}
+            </p>
+          )}
+        </div>
+
         {/* プロンプトの言語 */}
         <FormField
           control={form.control}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Wrench, Sparkles, History, Menu, Settings } from "lucide-react";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CommandMenu } from "@/components/ui/command-menu";
@@ -103,6 +104,7 @@ export function Navbar({ userName }: NavbarProps) {
           <div className="hidden md:flex items-center gap-3">
             <CommandMenu />
             <ThemeToggle />
+            {userName && <NotificationBell />}
             {userName && (
               <span className="text-sm text-muted-foreground truncate max-w-[150px]">
                 {userName}
@@ -131,9 +133,15 @@ export function Navbar({ userName }: NavbarProps) {
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 flex flex-col gap-4">
-                {/* グローバル検索 */}
-                <div className="pb-2 border-b">
+                {/* グローバル検索と通知 */}
+                <div className="pb-2 border-b space-y-2">
                   <CommandMenu />
+                  {userName && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">通知</span>
+                      <NotificationBell />
+                    </div>
+                  )}
                 </div>
 
                 {/* モバイルナビゲーション */}
