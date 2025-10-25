@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import { getActivityFeedAction } from "@/lib/actions/activity-feed.actions";
+import type { ActivityFeedItem } from "@/lib/types/activity";
 import { Wrench, Plus, Sparkles, History } from "lucide-react";
 import Link from "next/link";
 
@@ -11,7 +12,7 @@ export default async function Home() {
   const session = await auth();
 
   // 活動フィードを取得
-  let activities = [];
+  let activities: ActivityFeedItem[] = [];
   if (session?.user) {
     const activitiesResult = await getActivityFeedAction(10);
     if (activitiesResult.success) {
