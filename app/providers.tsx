@@ -24,7 +24,6 @@ export function Providers({ children }: { children: ReactNode }) {
 
           // Cache configuration
           revalidateIfStale: true,
-          keepPreviousData: true,
 
           // Error retry configuration
           errorRetryCount: 3,
