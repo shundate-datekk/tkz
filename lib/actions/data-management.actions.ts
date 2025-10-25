@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 import { supabase } from "@/lib/supabase/client";
 import type { AITool } from "@/lib/schemas/ai-tool.schema";
 

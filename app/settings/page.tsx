@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DataExport } from "@/components/settings/data-export";
 import { DataImport } from "@/components/settings/data-import";
