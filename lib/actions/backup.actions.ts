@@ -138,8 +138,8 @@ export async function createBackupAction(): Promise<CreateBackupResponse> {
       .getPublicUrl(filePath);
 
     // 6. バックアップメタデータをDBに保存
-    const { data: backupRecord, error: dbError } = await supabase
-      .from("backups")
+    const { data: backupRecord, error: dbError } = await (supabase
+      .from("backups") as any)
       .insert({
         user_id: session.user.id,
         storage_url: urlData.publicUrl,
@@ -148,9 +148,9 @@ export async function createBackupAction(): Promise<CreateBackupResponse> {
         prompt_count: prompts?.length || 0,
       })
       .select()
-      .single();
+      .single() as { data: Backup | null; error: any };
 
-    if (dbError) {
+    if (dbError || !backupRecord) {
       console.error("Failed to save backup metadata:", dbError);
       // Storage のファイルを削除（ロールバック）
       await supabase.storage.from("user-backups").remove([filePath]);
@@ -245,7 +245,7 @@ export async function restoreBackupAction(
       .from("backups")
       .select("*")
       .eq("id", backupId)
-      .single();
+      .single() as { data: Backup | null; error: any };
 
     if (fetchError || !backup) {
       return {
@@ -285,8 +285,8 @@ export async function restoreBackupAction(
     let restoredToolCount = 0;
     if (Array.isArray(backupData.tools)) {
       for (const tool of backupData.tools) {
-        const { error } = await supabase
-          .from("ai_tools")
+        const { error } = await (supabase
+          .from("ai_tools") as any)
           .insert({
             tool_name: tool.tool_name,
             category: tool.category,
@@ -308,8 +308,8 @@ export async function restoreBackupAction(
     let restoredPromptCount = 0;
     if (Array.isArray(backupData.prompts)) {
       for (const prompt of backupData.prompts) {
-        const { error } = await supabase
-          .from("prompt_history")
+        const { error } = await (supabase
+          .from("prompt_history") as any)
           .insert({
             user_id: session.user.id,
             input_text: prompt.input_text || "",

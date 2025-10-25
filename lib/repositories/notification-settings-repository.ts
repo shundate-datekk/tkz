@@ -12,7 +12,7 @@ class NotificationSettingsRepository {
   /**
    * 通知設定を取得（存在しない場合はデフォルト値を返す）
    */
-  async getSettings(userId: string): Promise<Result<NotificationSettings>> {
+  async getSettings(userId: string): Promise<Result<NotificationSettings, string>> {
     try {
       const supabase = await createClient();
 
@@ -20,7 +20,7 @@ class NotificationSettingsRepository {
         .from('notification_settings')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .single() as { data: any; error: any };
 
       if (error) {
         // レコードが存在しない場合はデフォルト値を返す
@@ -67,12 +67,12 @@ class NotificationSettingsRepository {
   async updateSettings(
     userId: string,
     settings: Omit<NotificationSettings, 'userId'>
-  ): Promise<Result<void>> {
+  ): Promise<Result<void, string>> {
     try {
       const supabase = await createClient();
 
-      const { error } = await supabase
-        .from('notification_settings')
+      const { error } = await (supabase
+        .from('notification_settings') as any)
         .upsert({
           user_id: userId,
           enable_tool_created: settings.enableToolCreated,

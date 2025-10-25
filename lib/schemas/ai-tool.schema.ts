@@ -56,6 +56,7 @@ export interface AITool {
   user_experience: string;
   rating: number;
   usage_date: string;
+  official_url?: string | null; // 公式URLフィールド（オプショナル）
   created_by: string;
   created_at: string;
   updated_at: string;

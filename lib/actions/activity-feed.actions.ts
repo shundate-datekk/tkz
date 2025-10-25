@@ -6,7 +6,7 @@
 'use server';
 
 import { activityFeedRepository } from '@/lib/repositories/activity-feed-repository';
-import type { Result } from '@/lib/types/result';
+import type { Result, AppError } from '@/lib/types/result';
 import type { ActivityFeedItem } from '@/lib/types/activity';
 
 /**
@@ -16,6 +16,6 @@ import type { ActivityFeedItem } from '@/lib/types/activity';
  */
 export async function getActivityFeedAction(
   limit: number = 20
-): Promise<Result<ActivityFeedItem[]>> {
+): Promise<Result<ActivityFeedItem[], AppError>> {
   return await activityFeedRepository.getRecentActivities(limit);
 }

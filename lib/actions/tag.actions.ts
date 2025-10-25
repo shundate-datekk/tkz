@@ -95,7 +95,7 @@ export async function replaceToolTagsAction(
       return existingResult;
     }
 
-    const existingTagIds = existingResult.data.map((tag) => tag.id);
+    const existingTagIds = existingResult.data.map((tag: Tag) => tag.id);
 
     // 新しいタグIDを取得または作成
     const newTagIds: string[] = [];
@@ -108,10 +108,10 @@ export async function replaceToolTagsAction(
     }
 
     // 削除するタグID（既存 - 新規）
-    const toDetach = existingTagIds.filter((id) => !newTagIds.includes(id));
+    const toDetach = existingTagIds.filter((id: string) => !newTagIds.includes(id));
 
     // 追加するタグID（新規 - 既存）
-    const toAttach = newTagIds.filter((id) => !existingTagIds.includes(id));
+    const toAttach = newTagIds.filter((id: string) => !existingTagIds.includes(id));
 
     // 削除
     if (toDetach.length > 0) {
@@ -149,7 +149,7 @@ export async function getTagsByToolIdsAction(
         if (!result.success) {
           return { toolId, tags: [] as string[] };
         }
-        return { toolId, tags: result.data.map((tag) => tag.name) };
+        return { toolId, tags: result.data.map((tag: Tag) => tag.name) };
       })
     );
 

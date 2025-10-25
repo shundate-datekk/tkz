@@ -58,13 +58,13 @@ export async function createToolAction(
         .from('users')
         .select('display_name')
         .eq('id', userId)
-        .single();
+        .single() as { data: { display_name: string | null } | null };
 
       // 自分以外の全ユーザーを取得
       const { data: otherUsers } = await supabase
         .from('users')
         .select('id')
-        .neq('id', userId);
+        .neq('id', userId) as { data: { id: string }[] | null };
 
       if (currentUser && otherUsers && otherUsers.length > 0) {
         // 各ユーザーに通知を送信

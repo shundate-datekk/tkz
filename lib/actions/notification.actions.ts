@@ -17,7 +17,7 @@ import type { Notification, NotificationSettings } from '@/lib/types/notificatio
  */
 export async function getUnreadNotificationsAction(
   limit: number = 10
-): Promise<Result<Notification[]>> {
+): Promise<Result<Notification[], string>> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -30,13 +30,13 @@ export async function getUnreadNotificationsAction(
   return await notificationRepository.getUnreadNotifications(
     session.user.id,
     limit
-  );
+  ) as Result<Notification[], string>;
 }
 
 /**
  * 未読通知件数を取得する
  */
-export async function getUnreadCountAction(): Promise<Result<number>> {
+export async function getUnreadCountAction(): Promise<Result<number, string>> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -46,7 +46,7 @@ export async function getUnreadCountAction(): Promise<Result<number>> {
     };
   }
 
-  return await notificationRepository.getUnreadCount(session.user.id);
+  return await notificationRepository.getUnreadCount(session.user.id) as Result<number, string>;
 }
 
 /**
@@ -55,7 +55,7 @@ export async function getUnreadCountAction(): Promise<Result<number>> {
  */
 export async function markNotificationAsReadAction(
   notificationId: string
-): Promise<Result<void>> {
+): Promise<Result<void, string>> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -65,13 +65,13 @@ export async function markNotificationAsReadAction(
     };
   }
 
-  return await notificationRepository.markAsRead(notificationId);
+  return await notificationRepository.markAsRead(notificationId) as Result<void, string>;
 }
 
 /**
  * すべての通知を既読にする
  */
-export async function markAllNotificationsAsReadAction(): Promise<Result<void>> {
+export async function markAllNotificationsAsReadAction(): Promise<Result<void, string>> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -81,14 +81,14 @@ export async function markAllNotificationsAsReadAction(): Promise<Result<void>> 
     };
   }
 
-  return await notificationRepository.markAllAsRead(session.user.id);
+  return await notificationRepository.markAllAsRead(session.user.id) as Result<void, string>;
 }
 
 /**
  * 通知設定を取得する
  */
 export async function getNotificationSettingsAction(): Promise<
-  Result<NotificationSettings>
+  Result<NotificationSettings, string>
 > {
   const session = await auth();
 
@@ -99,7 +99,7 @@ export async function getNotificationSettingsAction(): Promise<
     };
   }
 
-  return await notificationSettingsRepository.getSettings(session.user.id);
+  return await notificationSettingsRepository.getSettings(session.user.id) as Result<NotificationSettings, string>;
 }
 
 /**
@@ -107,7 +107,7 @@ export async function getNotificationSettingsAction(): Promise<
  */
 export async function updateNotificationSettingsAction(
   settings: Omit<NotificationSettings, 'userId'>
-): Promise<Result<void>> {
+): Promise<Result<void, string>> {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -120,5 +120,5 @@ export async function updateNotificationSettingsAction(
   return await notificationSettingsRepository.updateSettings(
     session.user.id,
     settings
-  );
+  ) as Result<void, string>;
 }

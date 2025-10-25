@@ -6,7 +6,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { Tag, TagWithCount, CreateTagData } from '@/lib/types/tag';
-import type { Result } from '@/lib/types/result';
+import type { Result, AppError } from '@/lib/types/result';
 
 export class TagRepository {
   /**
@@ -25,8 +25,8 @@ export class TagRepository {
       }
 
       // 新規作成
-      const { data, error } = await supabase
-        .from('tags')
+      const { data, error } = await (supabase
+        .from('tags') as any)
         .insert({ name: normalizedName })
         .select()
         .single();
@@ -76,7 +76,7 @@ export class TagRepository {
       const { data, error } = await supabase
         .from('tool_tags')
         .select('tags(*)')
-        .eq('tool_id', toolId);
+        .eq('tool_id', toolId) as { data: any; error: any };
 
       if (error) {
         return { success: false, error: new Error(error.message) };
@@ -84,8 +84,8 @@ export class TagRepository {
 
       // tool_tags.tags から tags を抽出
       const tags = data
-        .map(row => row.tags)
-        .filter((tag): tag is Tag => tag !== null);
+        .map((row: any) => row.tags)
+        .filter((tag: any): tag is Tag => tag !== null);
 
       return { success: true, data: tags };
     } catch (error) {
@@ -107,14 +107,14 @@ export class TagRepository {
           name,
           created_at,
           tool_tags(count)
-        `);
+        `) as { data: any; error: any };
 
       if (error) {
         return { success: false, error: new Error(error.message) };
       }
 
       // usage_count を計算
-      const tagsWithCount: TagWithCount[] = data.map(row => ({
+      const tagsWithCount: TagWithCount[] = data.map((row: any) => ({
         id: row.id,
         name: row.name,
         created_at: row.created_at,
@@ -139,13 +139,13 @@ export class TagRepository {
       const { data: existing, error: fetchError } = await supabase
         .from('tool_tags')
         .select('tag_id')
-        .eq('tool_id', toolId);
+        .eq('tool_id', toolId) as { data: any; error: any };
 
       if (fetchError) {
         return { success: false, error: new Error(fetchError.message) };
       }
 
-      const existingTagIds = new Set(existing?.map(row => row.tag_id) || []);
+      const existingTagIds = new Set(existing?.map((row: any) => row.tag_id) || []);
 
       // 新規のタグIDのみ抽出
       const newTagIds = tagIds.filter(tagId => !existingTagIds.has(tagId));
@@ -161,8 +161,8 @@ export class TagRepository {
         tag_id: tagId,
       }));
 
-      const { error: insertError } = await supabase
-        .from('tool_tags')
+      const { error: insertError } = await (supabase
+        .from('tool_tags') as any)
         .insert(inserts);
 
       if (insertError) {

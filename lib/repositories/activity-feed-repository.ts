@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
-import type { Result } from '@/lib/types/result';
+import type { Result, AppError } from '@/lib/types/result';
 import type { ActivityFeedItem } from '@/lib/types/activity';
 
 export class ActivityFeedRepository {
@@ -13,7 +13,7 @@ export class ActivityFeedRepository {
    * @param limit 取得件数（デフォルト: 20）
    * @returns 活動フィードアイテムの配列
    */
-  async getRecentActivities(limit: number = 20): Promise<Result<ActivityFeedItem[]>> {
+  async getRecentActivities(limit: number = 20): Promise<Result<ActivityFeedItem[], AppError>> {
     try {
       const activities: ActivityFeedItem[] = [];
 

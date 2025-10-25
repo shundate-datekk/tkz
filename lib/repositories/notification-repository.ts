@@ -17,7 +17,7 @@ class NotificationRepository {
   async getUnreadNotifications(
     userId: string,
     limit: number = 10
-  ): Promise<Result<Notification[]>> {
+  ): Promise<Result<Notification[], string>> {
     try {
       const supabase = await createClient();
 
@@ -84,7 +84,7 @@ class NotificationRepository {
    * 未読通知件数を取得
    * @param userId ユーザーID
    */
-  async getUnreadCount(userId: string): Promise<Result<number>> {
+  async getUnreadCount(userId: string): Promise<Result<number, string>> {
     try {
       const supabase = await createClient();
 
@@ -119,12 +119,12 @@ class NotificationRepository {
    * 通知を既読にする
    * @param notificationId 通知ID
    */
-  async markAsRead(notificationId: string): Promise<Result<void>> {
+  async markAsRead(notificationId: string): Promise<Result<void, string>> {
     try {
       const supabase = await createClient();
 
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await (supabase
+        .from('notifications') as any)
         .update({ is_read: true })
         .eq('id', notificationId);
 
@@ -153,12 +153,12 @@ class NotificationRepository {
    * すべての通知を既読にする
    * @param userId ユーザーID
    */
-  async markAllAsRead(userId: string): Promise<Result<void>> {
+  async markAllAsRead(userId: string): Promise<Result<void, string>> {
     try {
       const supabase = await createClient();
 
-      const { error } = await supabase
-        .from('notifications')
+      const { error } = await (supabase
+        .from('notifications') as any)
         .update({ is_read: true })
         .eq('user_id', userId)
         .eq('is_read', false);

@@ -169,18 +169,18 @@ export async function importToolsDataAction(
       try {
         // 既存データをクリーンアップ（id, created_at, updated_atなど）
         const cleanTool = {
-          tool_name: tool.tool_name,
-          category: tool.category,
-          usage_purpose: tool.usage_purpose,
-          user_experience: tool.user_experience,
-          rating: tool.rating,
-          usage_date: tool.usage_date || new Date().toISOString(),
-          official_url: tool.official_url || null,
+          tool_name: tool.tool_name!,
+          category: tool.category!,
+          usage_purpose: tool.usage_purpose!,
+          user_experience: tool.user_experience!,
+          rating: tool.rating!,
+          usage_date: (tool as AITool).usage_date || new Date().toISOString(),
+          official_url: (tool as AITool).official_url || null,
           created_by: session.user.id, // 現在のユーザーIDで上書き
         };
 
-        const { error } = await supabase
-          .from("ai_tools")
+        const { error } = await (supabase
+          .from("ai_tools") as any)
           .insert(cleanTool);
 
         if (error) {

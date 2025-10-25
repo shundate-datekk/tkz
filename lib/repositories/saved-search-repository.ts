@@ -7,7 +7,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { SavedSearch, CreateSavedSearchData } from '@/lib/types/saved-search';
 import type { AdvancedSearchConditions } from '@/lib/types/search';
-import type { Result } from '@/lib/types/result';
+import type { Result, AppError } from '@/lib/types/result';
 
 export class SavedSearchRepository {
   /**
@@ -17,8 +17,8 @@ export class SavedSearchRepository {
     try {
       const supabase = await createClient();
 
-      const { data: savedSearch, error } = await supabase
-        .from('saved_searches')
+      const { data: savedSearch, error } = await (supabase
+        .from('saved_searches') as any)
         .insert({
           user_id: data.user_id,
           name: data.name,
@@ -93,8 +93,8 @@ export class SavedSearchRepository {
     try {
       const supabase = await createClient();
 
-      const { data, error } = await supabase
-        .from('saved_searches')
+      const { data, error } = await (supabase
+        .from('saved_searches') as any)
         .update(updates)
         .eq('id', id)
         .select()

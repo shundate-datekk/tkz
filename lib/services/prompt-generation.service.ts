@@ -61,7 +61,7 @@ class PromptGenerationService {
       return success({
         promptText,
         inputParameters: validatedInput,
-        outputLanguage: validatedInput.outputLanguage,
+        outputLanguage: validatedInput.outputLanguage ?? "ja",
       });
     } catch (error) {
       console.error("Prompt generation error:", error);
@@ -152,7 +152,7 @@ class PromptGenerationService {
       const results: PromptGenerationResult[] = promptTexts.map((promptText) => ({
         promptText,
         inputParameters: validatedInput,
-        outputLanguage: validatedInput.outputLanguage,
+        outputLanguage: validatedInput.outputLanguage ?? "ja",
       }));
 
       return success(results);

@@ -25,9 +25,7 @@ export const generatePromptSchema = z.object({
     .max(500, "その他の要望は500文字以内で入力してください")
     .optional(),
   outputLanguage: z
-    .enum(["ja", "en"], {
-      errorMap: () => ({ message: "日本語または英語を選択してください" }),
-    })
+    .enum(["ja", "en"])
     .optional(),
 });
 

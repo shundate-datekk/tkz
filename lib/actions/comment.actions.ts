@@ -16,14 +16,14 @@ import type {
   Comment,
   CommentWithUser,
 } from '@/lib/types/comment';
-import type { Result } from '@/lib/types/result';
+import type { Result, AppError } from '@/lib/types/result';
 
 /**
  * コメントを作成
  */
 export async function createCommentAction(
   input: CreateCommentInput
-): Promise<Result<Comment>> {
+): Promise<Result<Comment, AppError>> {
   try {
     const session = await auth();
 
@@ -58,7 +58,7 @@ export async function createCommentAction(
       };
     }
 
-    const result = await commentRepository.create(input, session.user.id);
+    const result = await commentRepository.create(input, session.user.id) as Result<Comment, AppError>;
 
     if (result.success) {
       // ツール詳細ページを再検証
@@ -73,14 +73,14 @@ export async function createCommentAction(
           .from('ai_tools')
           .select('name, user_id')
           .eq('id', input.toolId)
-          .single();
+          .single() as { data: { name: string; user_id: string } | null };
 
         // 現在のユーザー情報を取得
         const { data: currentUser } = await supabase
           .from('users')
           .select('display_name')
           .eq('id', session.user.id)
-          .single();
+          .single() as { data: { display_name: string | null } | null };
 
         // ツールの作成者が自分でない場合のみ通知を送信
         if (tool && currentUser && tool.user_id !== session.user.id) {
@@ -117,7 +117,7 @@ export async function createCommentAction(
  */
 export async function updateCommentAction(
   input: UpdateCommentInput
-): Promise<Result<Comment>> {
+): Promise<Result<Comment, AppError>> {
   try {
     const session = await auth();
 
@@ -152,7 +152,7 @@ export async function updateCommentAction(
       };
     }
 
-    const result = await commentRepository.update(input, session.user.id);
+    const result = await commentRepository.update(input, session.user.id) as Result<Comment, AppError>;
 
     if (result.success) {
       // ツール詳細ページを再検証（tool_idが必要なので、更新後のコメントから取得）
@@ -177,7 +177,7 @@ export async function updateCommentAction(
  */
 export async function deleteCommentAction(
   commentId: string
-): Promise<Result<void>> {
+): Promise<Result<void, AppError>> {
   try {
     const session = await auth();
 
@@ -191,7 +191,7 @@ export async function deleteCommentAction(
       };
     }
 
-    const result = await commentRepository.delete(commentId, session.user.id);
+    const result = await commentRepository.delete(commentId, session.user.id) as Result<void, AppError>;
 
     if (result.success) {
       // すべてのツールページを再検証（tool_idが不明なため）
@@ -216,7 +216,7 @@ export async function deleteCommentAction(
  */
 export async function getCommentsByToolIdAction(
   toolId: string
-): Promise<Result<CommentWithUser[]>> {
+): Promise<Result<CommentWithUser[], AppError>> {
   try {
     const session = await auth();
 
@@ -230,7 +230,7 @@ export async function getCommentsByToolIdAction(
       };
     }
 
-    return await commentRepository.findByToolId(toolId);
+    return await commentRepository.findByToolId(toolId) as Result<CommentWithUser[], AppError>;
   } catch (error) {
     console.error('Unexpected error in getCommentsByToolIdAction:', error);
     return {
@@ -248,7 +248,7 @@ export async function getCommentsByToolIdAction(
  */
 export async function getCommentCountAction(
   toolId: string
-): Promise<Result<number>> {
+): Promise<Result<number, AppError>> {
   try {
     const session = await auth();
 
@@ -262,7 +262,7 @@ export async function getCommentCountAction(
       };
     }
 
-    return await commentRepository.countByToolId(toolId);
+    return await commentRepository.countByToolId(toolId) as Result<number, AppError>;
   } catch (error) {
     console.error('Unexpected error in getCommentCountAction:', error);
     return {

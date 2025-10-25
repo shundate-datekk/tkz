@@ -10,13 +10,13 @@ import type {
   CreateCommentInput,
   UpdateCommentInput,
 } from '@/lib/types/comment';
-import type { Result } from '@/lib/types/result';
+import type { Result, AppError } from '@/lib/types/result';
 
 export class CommentRepository {
   /**
    * ツールIDに紐づくコメント一覧を取得（ユーザー名付き、新しい順）
    */
-  async findByToolId(toolId: string): Promise<Result<CommentWithUser[]>> {
+  async findByToolId(toolId: string): Promise<Result<CommentWithUser[], AppError>> {
     try {
       const supabase = await createClient();
 
@@ -82,12 +82,12 @@ export class CommentRepository {
   async create(
     input: CreateCommentInput,
     userId: string
-  ): Promise<Result<Comment>> {
+  ): Promise<Result<Comment, AppError>> {
     try {
       const supabase = await createClient();
 
-      const { data, error } = await supabase
-        .from('comments')
+      const { data, error } = await (supabase
+        .from('comments') as any)
         .insert({
           tool_id: input.toolId,
           user_id: userId,
@@ -129,12 +129,12 @@ export class CommentRepository {
   async update(
     input: UpdateCommentInput,
     userId: string
-  ): Promise<Result<Comment>> {
+  ): Promise<Result<Comment, AppError>> {
     try {
       const supabase = await createClient();
 
-      const { data, error } = await supabase
-        .from('comments')
+      const { data, error } = await (supabase
+        .from('comments') as any)
         .update({
           content: input.content,
         })
@@ -183,7 +183,7 @@ export class CommentRepository {
   /**
    * コメントを削除（本人のみ）
    */
-  async delete(commentId: string, userId: string): Promise<Result<void>> {
+  async delete(commentId: string, userId: string): Promise<Result<void, AppError>> {
     try {
       const supabase = await createClient();
 
@@ -206,6 +206,7 @@ export class CommentRepository {
 
       return {
         success: true,
+        data: undefined,
       };
     } catch (error) {
       console.error('Unexpected error in delete:', error);
@@ -222,7 +223,7 @@ export class CommentRepository {
   /**
    * コメント数を取得
    */
-  async countByToolId(toolId: string): Promise<Result<number>> {
+  async countByToolId(toolId: string): Promise<Result<number, AppError>> {
     try {
       const supabase = await createClient();
 
