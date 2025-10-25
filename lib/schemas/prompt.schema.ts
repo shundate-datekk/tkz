@@ -28,7 +28,7 @@ export const generatePromptSchema = z.object({
     .enum(["ja", "en"], {
       errorMap: () => ({ message: "日本語または英語を選択してください" }),
     })
-    .default("ja"),
+    .optional(),
 });
 
 /**

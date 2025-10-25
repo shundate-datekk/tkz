@@ -51,13 +51,14 @@ export function PromptForm({
   const form = useForm<GeneratePromptInput>({
     resolver: zodResolver(generatePromptSchema),
     mode: "onBlur", // フォーカス離脱時にバリデーション
-    defaultValues: defaultValues || {
+    defaultValues: {
       purpose: "",
       sceneDescription: "",
       style: "",
       duration: "",
       additionalRequirements: "",
       outputLanguage: "ja",
+      ...defaultValues,
     },
   });
 
