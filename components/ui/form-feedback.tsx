@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, XCircle, X } from 'lucide-react';
 
-export interface FormFeedbackProps {
+export interface FormFeedbackProps extends React.HTMLAttributes<HTMLDivElement> {
   type?: 'success' | 'error';
   message?: string;
   onDismiss?: () => void;
@@ -33,7 +33,7 @@ export const FormFeedback = React.forwardRef<HTMLDivElement, FormFeedbackProps>(
 
         return () => clearTimeout(timer);
       }
-    }, [message, type, autoDismiss, autoDismissDelay]);
+    }, [message, type, autoDismiss, autoDismissDelay, onDismiss]);
 
     if (!message) {
       return null;

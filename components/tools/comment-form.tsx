@@ -80,7 +80,6 @@ export function CommentForm({ toolId, onCommentPosted }: CommentFormProps) {
           id="comment-error"
           type="error"
           message={error}
-          role="alert"
         />
       )}
 
