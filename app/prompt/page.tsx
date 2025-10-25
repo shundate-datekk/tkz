@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import dynamic from "next/dynamic";
 import { auth } from "@/auth";
 import { Navbar } from "@/components/layout/navbar";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PromptGenerator = dynamic(
@@ -33,6 +34,15 @@ export default async function PromptPage() {
       <Navbar userName={session.user.name ?? undefined} />
 
       <main className="container mx-auto max-w-3xl px-4 py-8">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'ホーム', href: '/' },
+            { label: 'プロンプト生成' },
+          ]}
+          className="mb-4"
+        />
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Sora2プロンプト生成</h1>
           <p className="mt-2 text-muted-foreground">

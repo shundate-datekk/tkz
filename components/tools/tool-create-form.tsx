@@ -15,15 +15,20 @@ export function ToolCreateForm() {
   async function handleSubmit(data: CreateAIToolInput) {
     startTransition(async () => {
       try {
+        console.log("Tool form submission started", data);
+
         // Optimistic UI: フォームをすぐに無効化してフィードバック
         const loadingToast = toast.loading("ツールを登録中...");
 
         const result = await createToolAction(data);
 
+        console.log("Tool creation result:", result);
+
         // ローディングトーストを削除
         toast.dismiss(loadingToast);
 
         if (!result.success) {
+          console.error("Tool creation failed:", result.error);
           toast.error(result.error);
           return;
         }

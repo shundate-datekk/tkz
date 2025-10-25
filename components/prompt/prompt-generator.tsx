@@ -26,6 +26,8 @@ export function PromptGenerator() {
   async function handleSubmit(data: GeneratePromptInput) {
     startTransition(async () => {
       try {
+        console.log("Prompt generation started", data);
+
         // 生成開始時にプロンプトをクリア
         setGeneratedPrompt(null);
         setIsSaved(false);
@@ -35,9 +37,12 @@ export function PromptGenerator() {
 
         const result = await generatePromptAction(data);
 
+        console.log("Prompt generation result:", result);
+
         toast.dismiss(loadingToast);
 
         if (!result.success) {
+          console.error("Prompt generation failed:", result.error);
           toast.error(result.error);
           return;
         }
