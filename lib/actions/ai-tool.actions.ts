@@ -72,7 +72,7 @@ export async function createToolAction(
           otherUsers.map((user) =>
             notifyToolCreated({
               toolId: result.data.id,
-              toolName: input.name,
+              toolName: input.tool_name,
               authorId: userId,
               authorName: currentUser.display_name || '不明なユーザー',
               recipientId: user.id,
