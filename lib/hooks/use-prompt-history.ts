@@ -36,8 +36,7 @@ export function usePromptHistory() {
       
       // Cache configuration
       revalidateIfStale: true,
-      keepPreviousData: true, // Keep previous data while fetching new data
-      
+
       // Error retry configuration
       errorRetryCount: 3,
       errorRetryInterval: 1000,
@@ -115,8 +114,7 @@ export function usePromptHistorySearch(keyword: string) {
       
       // Cache configuration
       revalidateIfStale: false,
-      keepPreviousData: true,
-      
+
       // Error retry configuration
       errorRetryCount: 2,
       errorRetryInterval: 1000,
