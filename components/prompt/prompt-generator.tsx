@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromptForm } from "@/components/prompt/prompt-form";
 import { PromptResultDialog } from "@/components/prompt/prompt-result-dialog";
 import { PromptVariationsDialog } from "@/components/prompt/prompt-variations-dialog";
-import { generatePromptAction, regeneratePromptAction, generatePromptVariationsAction, savePromptHistoryAction } from "@/lib/actions/prompt.actions";
+import { PromptImprovementsDialog } from "@/components/prompt/prompt-improvements-dialog";
+import { generatePromptAction, regeneratePromptAction, generatePromptVariationsAction, generatePromptImprovementsAction, savePromptHistoryAction } from "@/lib/actions/prompt.actions";
 import type { GeneratePromptInput } from "@/lib/schemas/prompt.schema";
 
 export function PromptGenerator() {
@@ -22,6 +23,9 @@ export function PromptGenerator() {
   const [isGeneratingVariations, setIsGeneratingVariations] = useState(false);
   const [variations, setVariations] = useState<Array<{ promptText: string; inputParameters: any }>>([]);
   const [isVariationsDialogOpen, setIsVariationsDialogOpen] = useState(false);
+  const [isGeneratingImprovements, setIsGeneratingImprovements] = useState(false);
+  const [improvements, setImprovements] = useState<{ improvedPrompt: string; suggestions: Array<{ category: string; suggestion: string; reason: string }> } | null>(null);
+  const [isImprovementsDialogOpen, setIsImprovementsDialogOpen] = useState(false);
 
   async function handleSubmit(data: GeneratePromptInput) {
     startTransition(async () => {
@@ -121,6 +125,53 @@ export function PromptGenerator() {
     }
   }
 
+  async function handleGenerateImprovements() {
+    if (!generatedPrompt || !lastInput) return;
+
+    setIsGeneratingImprovements(true);
+    try {
+      const loadingToast = toast.loading("プロンプトを分析中...");
+
+      const result = await generatePromptImprovementsAction(generatedPrompt, lastInput);
+
+      toast.dismiss(loadingToast);
+
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+
+      // 改善提案を保存
+      setImprovements({
+        improvedPrompt: result.data.improvedPrompt,
+        suggestions: result.data.suggestions
+      });
+      
+      // 単一プロンプトダイアログを閉じる
+      setIsDialogOpen(false);
+      
+      // 改善提案ダイアログを開く
+      setIsImprovementsDialogOpen(true);
+      
+      toast.success("改善提案を生成しました！");
+    } catch (error) {
+      console.error("Failed to generate improvements:", error);
+      toast.error("改善提案の生成中にエラーが発生しました");
+    } finally {
+      setIsGeneratingImprovements(false);
+    }
+  }
+
+  function handleApplyImprovement(improvedPrompt: string) {
+    // 改善版プロンプトを適用
+    setGeneratedPrompt(improvedPrompt);
+    setIsSaved(false);
+    
+    // 改善提案ダイアログを閉じて、結果ダイアログを開く
+    setIsImprovementsDialogOpen(false);
+    setIsDialogOpen(true);
+  }
+
   async function handleSave() {
     if (!generatedPrompt || !lastInput) return;
 
@@ -205,9 +256,11 @@ export function PromptGenerator() {
           onSave={handleSave}
           onRegenerate={handleRegenerate}
           onGenerateVariations={handleGenerateVariations}
+          onGenerateImprovements={handleGenerateImprovements}
           isSaving={isSaving}
           isRegenerating={isRegenerating}
           isGeneratingVariations={isGeneratingVariations}
+          isGeneratingImprovements={isGeneratingImprovements}
           isSaved={isSaved}
         />
       )}
@@ -220,6 +273,18 @@ export function PromptGenerator() {
           variations={variations}
           onSave={handleSaveVariation}
           isSaving={isSaving}
+        />
+      )}
+
+      {/* 改善提案ダイアログ */}
+      {improvements && generatedPrompt && (
+        <PromptImprovementsDialog
+          open={isImprovementsDialogOpen}
+          onOpenChange={setIsImprovementsDialogOpen}
+          originalPrompt={generatedPrompt}
+          improvedPrompt={improvements.improvedPrompt}
+          suggestions={improvements.suggestions}
+          onApply={handleApplyImprovement}
         />
       )}
     </>

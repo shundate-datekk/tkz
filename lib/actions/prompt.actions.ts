@@ -111,6 +111,44 @@ export async function generatePromptVariationsAction(
 }
 
 /**
+ * プロンプト改善提案生成のServer Action
+ */
+export async function generatePromptImprovementsAction(
+  currentPrompt: string,
+  input: GeneratePromptInput
+): Promise<ActionResult<{
+  improvedPrompt: string;
+  suggestions: Array<{
+    category: string;
+    suggestion: string;
+    reason: string;
+  }>;
+}>> {
+  try {
+    const result = await promptGenerationService.generatePromptImprovements(currentPrompt, input);
+
+    if (!result.success) {
+      const error = result.error as AppError;
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: result.data,
+    };
+  } catch (error) {
+    console.error("Generate prompt improvements action error:", error);
+    return {
+      success: false,
+      error: "改善提案の生成中にエラーが発生しました",
+    };
+  }
+}
+
+/**
  * プロンプト履歴保存のServer Action
  */
 export async function savePromptHistoryAction(

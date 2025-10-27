@@ -54,8 +54,8 @@ export function PromptForm({
     defaultValues: {
       purpose: "",
       sceneDescription: "",
-      style: "",
-      duration: "",
+      style: undefined,
+      duration: undefined,
       additionalRequirements: "",
       outputLanguage: "ja",
       ...defaultValues,
@@ -121,7 +121,6 @@ export function PromptForm({
               <SelectValue placeholder="テンプレートを選択してフォームを自動入力" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">テンプレートなし</SelectItem>
               {PROMPT_TEMPLATES.map((template) => (
                 <SelectItem key={template.id} value={template.id}>
                   <div className="flex items-center gap-2">

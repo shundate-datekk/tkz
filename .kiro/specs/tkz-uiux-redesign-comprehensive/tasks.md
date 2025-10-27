@@ -538,14 +538,19 @@
   - 番号付きリストのパース機能を実装
   - _Requirements: 13.4_
 
-- [ ] 36. AI改善提案機能を実装する
-- [ ] 36.1 AI改善提案UIを追加する
-  - プロンプト生成画面に「AI改善提案」ボタンを追加する
+- [x] 36. AI改善提案機能を実装する
+- [x] 36.1 AI改善提案UIを追加する
+  - プロンプト結果ダイアログに「AI改善提案」ボタンを追加する
+  - PromptImprovementsDialogコンポーネントを作成する
   - _Requirements: 13.5_
 
-- [ ] 36.2 AI改善提案処理を実装する
+- [x] 36.2 AI改善提案処理を実装する
   - 現在のプロンプトを分析し、改善案を具体的に提示する
-  - OpenAI APIを活用する
+  - OpenAI API (gpt-4o-mini)を活用する
+  - OpenAIClient.generatePromptImprovements メソッドを実装
+  - PromptGenerationService.generatePromptImprovements メソッドを実装
+  - generatePromptImprovementsAction Server Actionを実装
+  - 改善提案（カテゴリ、提案内容、理由）と改善版プロンプトを生成
   - _Requirements: 13.6_
 
 - [ ] 37. お気に入り機能を実装する

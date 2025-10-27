@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Save, RefreshCw, Sparkles, Wand2 } from "lucide-react";
+import { Copy, Check, Save, RefreshCw, Sparkles, Wand2, Lightbulb } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,9 +19,11 @@ interface PromptResultDialogProps {
   onSave: () => Promise<void>;
   onRegenerate: () => Promise<void>;
   onGenerateVariations: () => Promise<void>;
+  onGenerateImprovements: () => Promise<void>;
   isSaving: boolean;
   isRegenerating: boolean;
   isGeneratingVariations: boolean;
+  isGeneratingImprovements: boolean;
   isSaved: boolean;
 }
 
@@ -32,9 +34,11 @@ export function PromptResultDialog({
   onSave,
   onRegenerate,
   onGenerateVariations,
+  onGenerateImprovements,
   isSaving,
   isRegenerating,
   isGeneratingVariations,
+  isGeneratingImprovements,
   isSaved,
 }: PromptResultDialogProps) {
   const [isCopied, setIsCopied] = useState(false);
@@ -118,26 +122,34 @@ export function PromptResultDialog({
               )}
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <Button
               variant="secondary"
               onClick={onRegenerate}
               disabled={isRegenerating}
               size="lg"
-              className="flex-1"
             >
               <RefreshCw className={`mr-2 h-5 w-5 ${isRegenerating ? 'animate-spin' : ''}`} />
-              {isRegenerating ? "再生成中..." : "別のバリエーションを生成"}
+              {isRegenerating ? "再生成中..." : "再生成"}
             </Button>
             <Button
               variant="secondary"
               onClick={onGenerateVariations}
               disabled={isGeneratingVariations}
               size="lg"
-              className="flex-1"
             >
               <Wand2 className={`mr-2 h-5 w-5 ${isGeneratingVariations ? 'animate-pulse' : ''}`} />
-              {isGeneratingVariations ? "生成中..." : "3つのバリエーション"}
+              {isGeneratingVariations ? "生成中..." : "バリエーション"}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onGenerateImprovements}
+              disabled={isGeneratingImprovements}
+              size="lg"
+              className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:hover:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+            >
+              <Lightbulb className={`mr-2 h-5 w-5 text-amber-600 dark:text-amber-400 ${isGeneratingImprovements ? 'animate-pulse' : ''}`} />
+              {isGeneratingImprovements ? "分析中..." : "AI改善提案"}
             </Button>
           </div>
         </div>

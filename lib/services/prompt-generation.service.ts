@@ -192,6 +192,83 @@ class PromptGenerationService {
   }
 
   /**
+   * プロンプトの改善提案を生成
+   * @param currentPrompt 現在のプロンプト
+   * @param originalInput 元の入力パラメータ
+   * @returns 改善提案と改善版プロンプト
+   */
+  async generatePromptImprovements(
+    currentPrompt: string,
+    originalInput: GeneratePromptInput
+  ): Promise<Result<{
+    improvedPrompt: string;
+    suggestions: Array<{
+      category: string;
+      suggestion: string;
+      reason: string;
+    }>;
+  }, AppError>> {
+    try {
+      // バリデーション
+      const validatedInput = generatePromptSchema.parse(originalInput);
+
+      // OpenAI APIを使用して改善提案を生成
+      const result = await openaiClient.generatePromptImprovements(
+        currentPrompt,
+        {
+          purpose: validatedInput.purpose,
+          sceneDescription: validatedInput.sceneDescription,
+          style: validatedInput.style,
+          duration: validatedInput.duration,
+          additionalRequirements: validatedInput.additionalRequirements,
+          outputLanguage: validatedInput.outputLanguage,
+        }
+      );
+
+      // 生成結果の検証
+      if (!result.improvedPrompt || !result.suggestions || result.suggestions.length === 0) {
+        return failure(
+          openaiError("改善提案の生成に失敗しました。もう一度お試しください")
+        );
+      }
+
+      return success(result);
+    } catch (error) {
+      console.error("Prompt improvements generation error:", error);
+
+      // Zodバリデーションエラー
+      if (error instanceof ZodError) {
+        return failure(validationError("入力データが不正です", error.issues));
+      }
+
+      // OpenAI APIエラー
+      if (error && typeof error === "object" && "status" in error) {
+        const apiError = error as any;
+
+        // レート制限エラー
+        if (apiError.status === 429) {
+          return failure(rateLimitError());
+        }
+
+        // その他のAPIエラー
+        return failure(
+          openaiError(
+            apiError.message || "AI処理中にエラーが発生しました",
+            { status: apiError.status }
+          )
+        );
+      }
+
+      // その他のエラー
+      return failure(
+        serverError(
+          error instanceof Error ? error.message : "予期しないエラーが発生しました"
+        )
+      );
+    }
+  }
+
+  /**
    * Few-shot examplesを使用した高度なプロンプト生成
    * （将来的な拡張用）
    */

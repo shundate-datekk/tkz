@@ -126,6 +126,58 @@ export class OpenAIClient {
   }
 
   /**
+   * プロンプトの改善提案を生成
+   * @param currentPrompt 現在のプロンプト
+   * @param params 元の入力パラメータ
+   * @returns 改善提案と改善版プロンプト
+   */
+  async generatePromptImprovements(
+    currentPrompt: string,
+    params: VideoPromptParams
+  ): Promise<{
+    improvedPrompt: string;
+    suggestions: Array<{
+      category: string;
+      suggestion: string;
+      reason: string;
+    }>;
+  }> {
+    return withRetry(async () => {
+      const outputLanguage = params.outputLanguage || "ja";
+      const systemPrompt = this.buildImprovementSystemPrompt(outputLanguage);
+      const userPrompt = this.buildImprovementUserPrompt(currentPrompt, params);
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        response_format: { type: "json_object" },
+      });
+
+      const generatedContent = completion.choices[0]?.message?.content?.trim();
+
+      if (!generatedContent) {
+        throw new Error("改善提案の生成に失敗しました");
+      }
+
+      const result = JSON.parse(generatedContent);
+
+      if (!result.improvedPrompt || !result.suggestions) {
+        throw new Error("改善提案の解析に失敗しました");
+      }
+
+      return {
+        improvedPrompt: result.improvedPrompt,
+        suggestions: result.suggestions,
+      };
+    });
+  }
+
+  /**
    * 複数のバリエーションを一度に生成
    * @param params プロンプト生成パラメータ
    * @param count 生成するバリエーション数（デフォルト: 3）
@@ -165,6 +217,110 @@ export class OpenAIClient {
 
       return variations;
     });
+  }
+
+  /**
+   * 改善提案用のSystem Promptを構築
+   */
+  private buildImprovementSystemPrompt(language: "ja" | "en"): string {
+    const basePrompt = `You are an expert at analyzing and improving video generation prompts for Sora2 (OpenAI's video generation AI).
+Analyze the current prompt and provide specific improvement suggestions along with an improved version.`;
+
+    const guidelines = {
+      ja: `
+分析のガイドライン:
+- 現在のプロンプトを詳細に分析する
+- 具体的な改善提案を3〜5つ提供する
+- 各提案にはカテゴリ、具体的な提案内容、理由を含める
+- 改善版プロンプトを生成する（元のプロンプトより詳細で効果的）
+- 改善版プロンプトは日本語で出力する
+
+改善のポイント:
+1. カメラワーク: カメラの動き、アングル、フレーミングの明確化
+2. 照明: 照明の種類、方向、強度の詳細化
+3. 構図: 被写体の配置、前景・中景・背景の構成
+4. 動き: 被写体やカメラの動きの具体化
+5. 雰囲気: 色調、トーン、感情的な要素の強化
+6. 技術的詳細: 解像度、フレームレート、特殊効果の指定
+
+出力形式（JSON）:
+{
+  "improvedPrompt": "改善版プロンプト（日本語）",
+  "suggestions": [
+    {
+      "category": "カテゴリ名",
+      "suggestion": "具体的な改善提案",
+      "reason": "この改善が必要な理由"
+    }
+  ]
+}`,
+      en: `
+Analysis guidelines:
+- Analyze the current prompt in detail
+- Provide 3-5 specific improvement suggestions
+- Each suggestion should include category, specific suggestion, and reason
+- Generate an improved version of the prompt (more detailed and effective than the original)
+- Output the improved prompt in English
+
+Improvement focus areas:
+1. Camera work: Clarify camera movement, angles, framing
+2. Lighting: Detail lighting type, direction, intensity
+3. Composition: Subject placement, foreground/midground/background
+4. Movement: Specify subject and camera movement
+5. Atmosphere: Enhance color tone, mood, emotional elements
+6. Technical details: Specify resolution, frame rate, special effects
+
+Output format (JSON):
+{
+  "improvedPrompt": "Improved prompt (English)",
+  "suggestions": [
+    {
+      "category": "Category name",
+      "suggestion": "Specific improvement suggestion",
+      "reason": "Why this improvement is needed"
+    }
+  ]
+}`,
+    };
+
+    return `${basePrompt}
+${guidelines[language]}`;
+  }
+
+  /**
+   * 改善提案用のUser Promptを構築
+   */
+  private buildImprovementUserPrompt(
+    currentPrompt: string,
+    params: VideoPromptParams
+  ): string {
+    const language = params.outputLanguage || "ja";
+
+    if (language === "ja") {
+      return `現在のプロンプト:
+${currentPrompt}
+
+元の入力情報:
+- 目的: ${params.purpose}
+- シーン: ${params.sceneDescription}
+${params.style ? `- スタイル: ${params.style}` : ""}
+${params.duration ? `- 長さ: ${params.duration}` : ""}
+${params.additionalRequirements ? `- その他: ${params.additionalRequirements}` : ""}
+
+上記のプロンプトを分析し、改善提案と改善版プロンプトをJSON形式で提供してください。`;
+    } else {
+      return `Current prompt:
+${currentPrompt}
+
+Original input:
+- Purpose: ${params.purpose}
+- Scene: ${params.sceneDescription}
+${params.style ? `- Style: ${params.style}` : ""}
+${params.duration ? `- Duration: ${params.duration}` : ""}
+${params.additionalRequirements ? `- Additional: ${params.additionalRequirements}` : ""}
+
+Analyze the above prompt and provide improvement suggestions and an improved prompt in JSON format.`;
+    }
   }
 
   /**
