@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import type {
   AITool,
   CreateAIToolInput,
@@ -20,6 +20,7 @@ export class AIToolRepository {
     input: CreateAIToolInput,
     userId: string
   ): Promise<AITool | null> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("ai_tools")
       .insert({
@@ -46,6 +47,7 @@ export class AIToolRepository {
    * IDでAIツールを取得
    */
   async findById(id: string): Promise<AITool | null> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("ai_tools")
       .select("*")
@@ -68,6 +70,7 @@ export class AIToolRepository {
     sortBy: AIToolSortBy = "usage_date",
     sortOrder: SortOrder = "desc"
   ): Promise<AITool[]> {
+    const supabase = await createClient();
     let query = supabase
       .from("ai_tools")
       .select("*")
@@ -116,6 +119,7 @@ export class AIToolRepository {
     sortBy: AIToolSortBy = "usage_date",
     sortOrder: SortOrder = "desc"
   ): Promise<{ tools: AITool[]; total: number; totalPages: number }> {
+    const supabase = await createClient();
     const offset = (page - 1) * pageSize;
 
     let query = supabase
@@ -168,6 +172,7 @@ export class AIToolRepository {
    * ユーザーが作成したAIツールを取得
    */
   async findByUserId(userId: string): Promise<AITool[]> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("ai_tools")
       .select("*")
@@ -190,6 +195,7 @@ export class AIToolRepository {
     id: string,
     input: UpdateAIToolInput
   ): Promise<AITool | null> {
+    const supabase = await createClient();
     const { data, error } = await (supabase as any)
       .from("ai_tools")
       .update({
@@ -213,6 +219,7 @@ export class AIToolRepository {
    * AIツールを論理削除
    */
   async softDelete(id: string): Promise<boolean> {
+    const supabase = await createClient();
     const { error } = await (supabase as any)
       .from("ai_tools")
       .update({
@@ -233,6 +240,7 @@ export class AIToolRepository {
    * 論理削除されたツールを取得（30日以内）
    */
   async findDeletedTools(userId: string): Promise<AITool[]> {
+    const supabase = await createClient();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -256,6 +264,7 @@ export class AIToolRepository {
    * 論理削除されたツールを復元
    */
   async restore(id: string, userId: string): Promise<AITool | null> {
+    const supabase = await createClient();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -285,6 +294,7 @@ export class AIToolRepository {
    * 指定日数より古い論理削除されたツールを物理削除
    */
   async cleanupOldDeletedTools(days: number = 30): Promise<number> {
+    const supabase = await createClient();
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
@@ -307,6 +317,7 @@ export class AIToolRepository {
    * AIツールを物理削除（管理用）
    */
   async hardDelete(id: string): Promise<boolean> {
+    const supabase = await createClient();
     const { error } = await supabase.from("ai_tools").delete().eq("id", id);
 
     if (error) {
@@ -321,6 +332,7 @@ export class AIToolRepository {
    * カテゴリ別のツール数を取得
    */
   async countByCategory(): Promise<Record<string, number>> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("ai_tools")
       .select("category")
@@ -344,6 +356,7 @@ export class AIToolRepository {
    * ユーザー別のツール数を取得
    */
   async countByUser(): Promise<Record<string, number>> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from("ai_tools")
       .select("created_by")

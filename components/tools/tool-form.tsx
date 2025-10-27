@@ -48,7 +48,7 @@ export function ToolForm({
     mode: "onBlur", // フォーカス離脱時にバリデーション
     defaultValues: defaultValues || {
       tool_name: "",
-      category: "",
+      category: undefined,
       usage_purpose: "",
       user_experience: "",
       rating: 3,
