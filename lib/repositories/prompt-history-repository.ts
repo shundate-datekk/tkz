@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 import type {
   PromptHistory,
   CreatePromptHistoryInput,
@@ -14,7 +14,7 @@ class PromptHistoryRepository {
   async create(
     input: CreatePromptHistoryInput
   ): Promise<PromptHistory | null> {
-
+    const supabase = await createClient();
     const { data, error } = await (supabase as any)
       .from("prompt_history")
       .insert([
@@ -40,6 +40,7 @@ class PromptHistoryRepository {
    * IDでプロンプト履歴を取得
    */
   async findById(id: string): Promise<PromptHistory | null> {
+    const supabase = await createClient();
     const { data, error } = await (supabase as any)
       .from("prompt_history")
       .select("*")
@@ -67,6 +68,7 @@ class PromptHistoryRepository {
       order?: "asc" | "desc";
     }
   ): Promise<PromptHistory[]> {
+    const supabase = await createClient();
     const limit = options?.limit || 50;
     const offset = options?.offset || 0;
     const orderBy = options?.orderBy || "created_at";
@@ -97,6 +99,7 @@ class PromptHistoryRepository {
     orderBy?: "created_at" | "updated_at";
     order?: "asc" | "desc";
   }): Promise<PromptHistory[]> {
+    const supabase = await createClient();
     const limit = options?.limit || 50;
     const offset = options?.offset || 0;
     const orderBy = options?.orderBy || "created_at";
@@ -128,6 +131,7 @@ class PromptHistoryRepository {
       offset?: number;
     }
   ): Promise<PromptHistory[]> {
+    const supabase = await createClient();
     const limit = options?.limit || 50;
     const offset = options?.offset || 0;
 
@@ -162,6 +166,7 @@ class PromptHistoryRepository {
    * プロンプト履歴を削除（論理削除）
    */
   async delete(id: string): Promise<boolean> {
+    const supabase = await createClient();
     const { error } = await (supabase as any)
       .from("prompt_history")
       .update({ deleted_at: new Date().toISOString() })
@@ -179,6 +184,7 @@ class PromptHistoryRepository {
    * ユーザーのプロンプト履歴数を取得
    */
   async countByUserId(userId: string): Promise<number> {
+    const supabase = await createClient();
     const { count, error } = await (supabase as any)
       .from("prompt_history")
       .select("*", { count: "exact", head: true })
@@ -197,6 +203,7 @@ class PromptHistoryRepository {
    * 全てのプロンプト履歴数を取得
    */
   async countAll(): Promise<number> {
+    const supabase = await createClient();
     const { count, error } = await (supabase as any)
       .from("prompt_history")
       .select("*", { count: "exact", head: true })
