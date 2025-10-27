@@ -27,10 +27,17 @@ export async function createToolAction(
   input: CreateAIToolInput
 ): Promise<ActionResult<{ id: string }>> {
   try {
+    console.log("[createToolAction] Starting tool creation");
+    console.log("[createToolAction] Input:", input);
+
     const userId = await getCurrentUserId();
+    console.log("[createToolAction] Got userId:", userId);
+
     const result = await aiToolService.createTool(input, userId);
+    console.log("[createToolAction] Service result:", result);
 
     if (!result.success) {
+      console.error("[createToolAction] Service returned error:", result.error);
       return {
         success: false,
         error: result.error.message,

@@ -34,24 +34,31 @@ export class AIToolService {
     userId: string
   ): Promise<Result<AITool, AppError>> {
     try {
+      console.log("[AIToolService] Creating tool for userId:", userId);
+      console.log("[AIToolService] Input data:", input);
+
       // バリデーション
       const validated = createAiToolSchema.parse(input);
+      console.log("[AIToolService] Validation passed");
 
       // リポジトリで作成
       const tool = await aiToolRepository.create(validated, userId);
 
       if (!tool) {
-        return failure(serverError("AIツールの作成に失敗しました"));
+        console.error("[AIToolService] Repository returned null - creation failed");
+        return failure(serverError("AIツールの作成に失敗しました（リポジトリエラー）"));
       }
 
+      console.log("[AIToolService] Tool created successfully:", tool.id);
       return success(tool);
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error("[AIToolService] Validation error:", error.issues);
         return failure(
           validationError("入力データが不正です", error.issues)
         );
       }
-      console.error("Failed to create AI tool:", error);
+      console.error("[AIToolService] Unexpected error:", error);
       return failure(serverError("AIツールの作成中にエラーが発生しました"));
     }
   }

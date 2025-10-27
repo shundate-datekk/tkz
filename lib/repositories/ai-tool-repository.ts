@@ -21,6 +21,10 @@ export class AIToolRepository {
     userId: string
   ): Promise<AITool | null> {
     const supabase = await createClient();
+
+    console.log("[DEBUG] Creating AI tool with userId:", userId);
+    console.log("[DEBUG] Input data:", input);
+
     const { data, error } = await supabase
       .from("ai_tools")
       .insert({
@@ -36,10 +40,18 @@ export class AIToolRepository {
       .single();
 
     if (error || !data) {
-      console.error("Failed to create AI tool:", error);
+      console.error("Failed to create AI tool - Error details:", {
+        error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        userId,
+        inputData: input
+      });
       return null;
     }
 
+    console.log("[DEBUG] AI tool created successfully:", data);
     return data as any;
   }
 
