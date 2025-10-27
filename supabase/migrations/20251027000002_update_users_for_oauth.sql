@@ -42,10 +42,14 @@ CREATE INDEX IF NOT EXISTS idx_users_email_lookup ON users(email) WHERE email IS
 -- 6. provider カラムにインデックス
 CREATE INDEX IF NOT EXISTS idx_users_provider ON users(provider) WHERE provider IS NOT NULL;
 
--- 7. 既存のusername UNIQUEインデックスを部分インデックスに変更
+-- 7. 既存のusername UNIQUE制約を削除してから部分インデックスに変更
 -- （username がNULLの場合は制約をスキップ）
+-- まず制約を削除
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key;
+-- 既存のインデックスを削除
 DROP INDEX IF EXISTS users_username_key;
 DROP INDEX IF EXISTS idx_users_username;
+-- 新しい部分インデックスを作成
 CREATE UNIQUE INDEX idx_users_username_unique ON users(username) WHERE username IS NOT NULL;
 
 -- 8. テーブルのコメントを更新
