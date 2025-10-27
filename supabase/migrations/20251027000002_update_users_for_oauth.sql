@@ -44,10 +44,9 @@ CREATE INDEX IF NOT EXISTS idx_users_provider ON users(provider) WHERE provider 
 
 -- 7. 既存のusername UNIQUE制約を削除してから部分インデックスに変更
 -- （username がNULLの場合は制約をスキップ）
--- まず制約を削除
+-- 注意: UNIQUE制約を削除すると、関連するインデックスも自動的に削除される
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key;
--- 既存のインデックスを削除
-DROP INDEX IF EXISTS users_username_key;
+-- 他のインデックスがあれば削除（users_username_keyは制約削除で自動削除される）
 DROP INDEX IF EXISTS idx_users_username;
 -- 新しい部分インデックスを作成
 CREATE UNIQUE INDEX idx_users_username_unique ON users(username) WHERE username IS NOT NULL;
