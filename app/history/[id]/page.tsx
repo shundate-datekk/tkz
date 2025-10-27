@@ -51,7 +51,7 @@ export default async function HistoryDetailPage({
   const history = historyResult.data;
 
   // 作成者情報を取得
-  const creator = await userRepository.findById(history.created_by);
+  const creator = await userRepository.findById(history.user_id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,13 +71,13 @@ export default async function HistoryDetailPage({
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>生成されたプロンプト</CardTitle>
-              <PromptHistoryCopyButton promptText={history.prompt_text} />
+              <PromptHistoryCopyButton promptText={history.generated_prompt} />
             </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-lg bg-muted p-4">
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                {history.prompt_text}
+                {history.generated_prompt}
               </p>
             </div>
           </CardContent>
@@ -89,47 +89,47 @@ export default async function HistoryDetailPage({
             <CardTitle>入力パラメータ</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {history.input_parameters?.purpose && (
+            {history.input_params?.purpose && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold">目的</h3>
                 <p className="text-sm text-muted-foreground">
-                  {history.input_parameters.purpose}
+                  {history.input_params.purpose}
                 </p>
               </div>
             )}
 
-            {history.input_parameters?.sceneDescription && (
+            {history.input_params?.sceneDescription && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold">シーン説明</h3>
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                  {history.input_parameters.sceneDescription}
+                  {history.input_params.sceneDescription}
                 </p>
               </div>
             )}
 
-            {history.input_parameters?.style && (
+            {history.input_params?.style && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold">スタイル</h3>
                 <p className="text-sm text-muted-foreground">
-                  {history.input_parameters.style}
+                  {history.input_params.style}
                 </p>
               </div>
             )}
 
-            {history.input_parameters?.duration && (
+            {history.input_params?.duration && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold">長さ</h3>
                 <p className="text-sm text-muted-foreground">
-                  {history.input_parameters.duration}
+                  {history.input_params.duration}
                 </p>
               </div>
             )}
 
-            {history.input_parameters?.additionalRequirements && (
+            {history.input_params?.additionalRequirements && (
               <div>
                 <h3 className="mb-2 text-sm font-semibold">その他の要望</h3>
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                  {history.input_parameters.additionalRequirements}
+                  {history.input_params.additionalRequirements}
                 </p>
               </div>
             )}

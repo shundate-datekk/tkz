@@ -43,11 +43,11 @@ export function PromptHistoryList({
 
     return histories.filter((history) => {
       // プロンプトテキストで検索
-      const promptText = history.prompt_text.toLowerCase();
+      const promptText = history.generated_prompt.toLowerCase();
       if (promptText.includes(query)) return true;
 
       // 入力パラメータで検索
-      const params = history.input_parameters;
+      const params = history.input_params;
       if (params?.purpose?.toLowerCase().includes(query)) return true;
       if (params?.sceneDescription?.toLowerCase().includes(query)) return true;
       if (params?.style?.toLowerCase().includes(query)) return true;
@@ -104,7 +104,7 @@ export function PromptHistoryList({
             <PromptHistoryCard
               key={history.id}
               history={history}
-              userName={userMap.get(history.created_by) || "不明"}
+              userName={userMap.get(history.user_id) || "不明"}
             />
           ))}
         </div>

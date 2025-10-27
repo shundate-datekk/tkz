@@ -24,12 +24,12 @@ export function PromptHistoryCard({ history, userName }: PromptHistoryCardProps)
   });
 
   // プロンプトテキストを最初の150文字でプレビュー
-  const preview = history.prompt_text.length > 150
-    ? history.prompt_text.slice(0, 150) + "..."
-    : history.prompt_text;
+  const preview = history.generated_prompt.length > 150
+    ? history.generated_prompt.slice(0, 150) + "..."
+    : history.generated_prompt;
 
   // タイトルの省略表示判定
-  const title = history.input_parameters?.purpose || "Sora2プロンプト";
+  const title = history.input_params?.purpose || "Sora2プロンプト";
   const isTitleTruncated = title.length > 50;
 
   return (

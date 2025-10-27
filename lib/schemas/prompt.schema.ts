@@ -36,25 +36,27 @@ export type GeneratePromptInput = z.infer<typeof generatePromptSchema>;
 
 /**
  * プロンプト履歴のZodスキーマ
+ * 注: データベースのカラム名に合わせています
  */
 export const promptHistorySchema = z.object({
-  prompt_text: z.string().min(1, "プロンプトテキストは必須です"),
-  input_parameters: z.record(z.string(), z.any()),
-  created_by: z.string().uuid("無効なユーザーIDです"),
+  generated_prompt: z.string().min(1, "プロンプトテキストは必須です"),
+  input_params: z.record(z.string(), z.any()),
+  user_id: z.string().uuid("無効なユーザーIDです"),
   output_language: z.enum(["ja", "en"]).optional().default("ja"),
 });
 
 /**
  * プロンプト履歴の型定義
+ * 注: データベースのカラム名に合わせています
  */
 export interface PromptHistory {
   id: string;
-  prompt_text: string;
-  input_parameters: Record<string, any>;
-  created_by: string;
+  generated_prompt: string;
+  input_params: Record<string, any>;
+  user_id: string;
   created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
+  updated_at?: string;
+  deleted_at?: string | null;
   output_language: string;
 }
 

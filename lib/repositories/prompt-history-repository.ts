@@ -15,13 +15,17 @@ class PromptHistoryRepository {
     input: CreatePromptHistoryInput
   ): Promise<PromptHistory | null> {
     const supabase = await createClient();
+
+    console.log("[DEBUG] Creating prompt history with user_id:", input.user_id);
+    console.log("[DEBUG] Input data:", input);
+
     const { data, error } = await (supabase as any)
       .from("prompt_history")
       .insert([
         {
-          prompt_text: input.prompt_text,
-          input_parameters: input.input_parameters,
-          created_by: input.created_by,
+          generated_prompt: input.generated_prompt,
+          input_params: input.input_params,
+          user_id: input.user_id,
           output_language: input.output_language || "ja",
         },
       ])
@@ -29,10 +33,18 @@ class PromptHistoryRepository {
       .single();
 
     if (error) {
-      console.error("Failed to create prompt history:", error);
+      console.error("Failed to create prompt history - Error details:", {
+        error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        userId: input.user_id,
+        inputData: input
+      });
       return null;
     }
 
+    console.log("[DEBUG] Prompt history created successfully:", data?.id);
     return data;
   }
 

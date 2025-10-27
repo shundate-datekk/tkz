@@ -157,7 +157,11 @@ export async function savePromptHistoryAction(
   outputLanguage?: "ja" | "en"
 ): Promise<ActionResult<{ id: string }>> {
   try {
+    console.log("[savePromptHistoryAction] Starting prompt history save");
+    console.log("[savePromptHistoryAction] Prompt text length:", promptText.length);
+
     const userId = await getCurrentUserId();
+    console.log("[savePromptHistoryAction] Got userId:", userId);
 
     if (!userId) {
       return {
@@ -167,14 +171,17 @@ export async function savePromptHistoryAction(
     }
 
     const result = await promptHistoryService.savePromptHistory({
-      prompt_text: promptText,
-      input_parameters: inputParameters as any,
-      created_by: userId,
+      generated_prompt: promptText,
+      input_params: inputParameters as any,
+      user_id: userId,
       output_language: outputLanguage || inputParameters.outputLanguage || "ja",
     });
 
+    console.log("[savePromptHistoryAction] Service result:", result);
+
     if (!result.success) {
       const error = result.error as AppError;
+      console.error("[savePromptHistoryAction] Service returned error:", error);
       return {
         success: false,
         error: error.message,
@@ -183,6 +190,8 @@ export async function savePromptHistoryAction(
 
     // 履歴ページをリバリデート
     revalidatePath("/history");
+
+    console.log("[savePromptHistoryAction] Prompt history saved successfully:", result.data.id);
 
     return {
       success: true,
