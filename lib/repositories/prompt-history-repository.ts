@@ -110,6 +110,7 @@ class PromptHistoryRepository {
     offset?: number;
     orderBy?: "created_at" | "updated_at";
     order?: "asc" | "desc";
+    userId?: string;
   }): Promise<PromptHistory[]> {
     const supabase = await createClient();
     const limit = options?.limit || 50;
@@ -117,10 +118,17 @@ class PromptHistoryRepository {
     const orderBy = options?.orderBy || "created_at";
     const order = options?.order || "desc";
 
-    const { data, error } = await (supabase as any)
+    let query = (supabase as any)
       .from("prompt_history")
       .select("*")
-      .is("deleted_at", null)
+      .is("deleted_at", null);
+
+    // userIdが指定されている場合のみフィルタリング
+    if (options?.userId) {
+      query = query.eq("created_by", options.userId);
+    }
+
+    const { data, error } = await query
       .order(orderBy, { ascending: order === "asc" })
       .range(offset, offset + limit - 1);
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { promptHistoryService } from "@/lib/services/prompt-history.service";
 import { userRepository } from "@/lib/repositories/user-repository";
+import { FavoritePromptRepository } from "@/lib/repositories/favorite-prompt.repository";
 import { Navbar } from "@/components/layout/navbar";
 import { PromptHistoryList } from "@/components/prompt/prompt-history-list";
 
@@ -41,6 +42,17 @@ export default async function HistoryPage() {
   const users = await userRepository.findAll();
   const userMap = new Map(users.map((u) => [u.id, u.display_name]));
 
+  // 現在のユーザーのお気に入りプロンプトを取得
+  const favoriteRepository = new FavoritePromptRepository();
+  const favoritesResult = await favoriteRepository.findByUserId(
+    session.user.id!,
+  );
+  const favoritedPromptIds = new Set(
+    favoritesResult.success
+      ? favoritesResult.data.map((fav) => fav.prompt_history_id)
+      : [],
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar userName={session.user.name ?? undefined} />
@@ -50,7 +62,12 @@ export default async function HistoryPage() {
           <h1 className="text-3xl font-bold">プロンプト履歴</h1>
         </div>
 
-        <PromptHistoryList histories={histories} userMap={userMap} />
+        <PromptHistoryList
+          histories={histories}
+          userMap={userMap}
+          currentUserId={session.user.id!}
+          favoritedPromptIds={favoritedPromptIds}
+        />
       </main>
     </div>
   );

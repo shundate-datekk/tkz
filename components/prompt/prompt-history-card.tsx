@@ -9,14 +9,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { FavoriteButton } from "@/components/prompt/favorite-button";
 import type { PromptHistory } from "@/lib/schemas/prompt.schema";
 
 interface PromptHistoryCardProps {
   history: PromptHistory;
   userName: string;
+  userId: string;
+  isFavorited?: boolean;
 }
 
-export function PromptHistoryCard({ history, userName }: PromptHistoryCardProps) {
+export function PromptHistoryCard({
+  history,
+  userName,
+  userId,
+  isFavorited = false,
+}: PromptHistoryCardProps) {
   const createdAt = new Date(history.created_at);
   const relativeTime = formatDistanceToNow(createdAt, {
     addSuffix: true,
@@ -54,6 +62,13 @@ export function PromptHistoryCard({ history, userName }: PromptHistoryCardProps)
               {title}
             </CardTitle>
           )}
+          <FavoriteButton
+            userId={userId}
+            promptHistoryId={history.id}
+            initialIsFavorited={isFavorited}
+            size="icon"
+            variant="ghost"
+          />
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
           <span className="truncate">{userName}</span>

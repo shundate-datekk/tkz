@@ -1,12 +1,33 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { DataExport } from "@/components/settings/data-export";
-import { DataImport } from "@/components/settings/data-import";
-import { DataBackup } from "@/components/settings/data-backup";
+import dynamic from "next/dynamic";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/layout/navbar";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// 大きなコンポーネントを動的インポート（Requirement 8.4）
+const DataExport = dynamic(
+  () => import("@/components/settings/data-export").then((mod) => ({ default: mod.DataExport })),
+  {
+    loading: () => <Skeleton className="h-[200px] w-full" />,
+  }
+);
+
+const DataImport = dynamic(
+  () => import("@/components/settings/data-import").then((mod) => ({ default: mod.DataImport })),
+  {
+    loading: () => <Skeleton className="h-[300px] w-full" />,
+  }
+);
+
+const DataBackup = dynamic(
+  () => import("@/components/settings/data-backup").then((mod) => ({ default: mod.DataBackup })),
+  {
+    loading: () => <Skeleton className="h-[250px] w-full" />,
+  }
+);
 
 /**
  * 設定ページ

@@ -110,6 +110,7 @@ class PromptHistoryService {
     offset?: number;
     orderBy?: "created_at" | "updated_at";
     order?: "asc" | "desc";
+    userId?: string;
   }): Promise<Result<PromptHistory[], AppError>> {
     try {
       const histories = await promptHistoryRepository.findAll(options);

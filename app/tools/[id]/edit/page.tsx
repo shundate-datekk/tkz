@@ -1,11 +1,20 @@
 import { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 import { auth } from "@/auth";
 import { aiToolService } from "@/lib/services/ai-tool.service";
 import { getTagsByToolIdAction } from "@/lib/actions/tag.actions";
-import { ToolEditForm } from "@/components/tools/tool-edit-form";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { Navbar } from "@/components/layout/navbar";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// ToolEditFormを動的インポート（Requirement 8.4）
+const ToolEditForm = dynamic(
+  () => import("@/components/tools/tool-edit-form").then((mod) => ({ default: mod.ToolEditForm })),
+  {
+    loading: () => <Skeleton className="h-[600px] w-full" />,
+  }
+);
 
 interface ToolEditPageProps {
   params: Promise<{ id: string }>;

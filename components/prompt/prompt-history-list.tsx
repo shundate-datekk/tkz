@@ -12,11 +12,15 @@ import type { PromptHistory } from "@/lib/schemas/prompt.schema";
 interface PromptHistoryListProps {
   histories: PromptHistory[];
   userMap: Map<string, string>;
+  currentUserId: string;
+  favoritedPromptIds?: Set<string>;
 }
 
 export function PromptHistoryList({
   histories,
   userMap,
+  currentUserId,
+  favoritedPromptIds = new Set(),
 }: PromptHistoryListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -105,6 +109,8 @@ export function PromptHistoryList({
               key={history.id}
               history={history}
               userName={userMap.get(history.user_id) || "不明"}
+              userId={currentUserId}
+              isFavorited={favoritedPromptIds.has(history.id)}
             />
           ))}
         </div>

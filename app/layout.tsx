@@ -6,17 +6,23 @@ import { WebVitals } from "@/components/analytics/web-vitals";
 import { SessionManager } from "@/components/auth/session-manager";
 import "./globals.css";
 
+// フォント最適化（Requirement 8.6）
+// next/font/googleで自動最適化、font-display: swapでテキストの即座表示
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const notoSansJP = Noto_Sans_JP({
-  subsets: ["latin"],
+  subsets: ["latin"], // 日本語サブセットは自動的に含まれる
   display: "swap",
   variable: "--font-noto-sans-jp",
   weight: ["400", "500", "700"],
+  preload: true,
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {

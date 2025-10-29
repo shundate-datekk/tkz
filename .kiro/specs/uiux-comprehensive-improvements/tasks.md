@@ -178,27 +178,27 @@
 
 ## Phase 5: パフォーマンス最適化（優先度：中）
 
-- [ ] 11. 画像最適化の実装
-- [ ] 11.1 next/imageコンポーネントへの移行
+- [x] 11. 画像最適化の実装
+- [x] 11.1 next/imageコンポーネントへの移行
   - 既存のimg要素をnext/imageコンポーネントに置き換え
   - width、height属性を指定してCLS（Cumulative Layout Shift）を防止
   - loading="lazy"でスクロール時の遅延読み込みを有効化
   - sizes属性でレスポンシブ画像サイズを指定
   - _Requirements: 8.2, 8.3, 8.5_
 
-- [ ] 11.2 画像形式の最適化
+- [x] 11.2 画像形式の最適化
   - next/imageが自動的にWebP/AVIF形式で配信することを確認
   - 画像ファイルを適切なサイズに圧縮
   - _Requirements: 8.2_
 
 - [ ] 12. コード分割とフォント最適化
-- [ ] 12.1 動的インポートによるコード分割
+- [x] 12.1 動的インポートによるコード分割
   - 大きなコンポーネント（PromptGenerator等）をnext/dynamicで動的インポート
   - 初回読み込みサイズを最小化し、ルートセグメント単位で分割
   - Suspenseとloading.tsxを活用したストリーミング表示
   - _Requirements: 8.4_
 
-- [ ] 12.2 フォント最適化
+- [x] 12.2 フォント最適化
   - app/layout.tsxでnext/font/googleを使用してフォントを最適化
   - font-display: swapを設定し、テキストの即座表示を保証
   - フォントのサブセット読み込みを確認

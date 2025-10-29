@@ -1,12 +1,21 @@
 import { auth } from "@/auth";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/navbar";
 import { BottomNavigation } from "@/components/layout/bottom-navigation";
-import { ActivityFeed } from "@/components/activity/activity-feed";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getActivityFeedAction } from "@/lib/actions/activity-feed.actions";
 import type { ActivityFeedItem } from "@/lib/types/activity";
 import { Wrench, Plus, Sparkles, History } from "lucide-react";
 import Link from "next/link";
+
+// ActivityFeedを動的インポート（Requirement 8.4）
+const ActivityFeed = dynamic(
+  () => import("@/components/activity/activity-feed").then((mod) => ({ default: mod.ActivityFeed })),
+  {
+    loading: () => <Skeleton className="h-[400px] w-full" />,
+  }
+);
 
 export default async function Home() {
   const session = await auth();

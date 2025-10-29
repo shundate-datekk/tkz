@@ -76,6 +76,41 @@
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Enhanced Focus Ring for Accessibility (WCAG 2.1 AA) */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove default focus styles */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* High contrast focus for interactive elements */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible,
+  [role="tab"]:focus-visible,
+  [role="menuitem"]:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /* Enhanced focus for form elements */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    ring-width: 2px;
+    ring-color: hsl(var(--ring));
+    border-color: hsl(var(--ring));
+  }
 }
 
 /* Micro-interactions - Custom Animations */
