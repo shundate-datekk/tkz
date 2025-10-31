@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
  * NextAuth.js 設定
  * Google OAuth認証を使用
  */
-export const export const authConfig: NextAuthConfig = {
+export const authConfig: NextAuthConfig = {
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
