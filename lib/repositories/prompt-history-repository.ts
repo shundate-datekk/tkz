@@ -89,7 +89,7 @@ class PromptHistoryRepository {
     const { data, error } = await (supabase as any)
       .from("prompt_history")
       .select("*")
-      .eq("created_by", userId)
+      .eq("user_id", userId)
       .is("deleted_at", null)
       .order(orderBy, { ascending: order === "asc" })
       .range(offset, offset + limit - 1);
@@ -125,7 +125,7 @@ class PromptHistoryRepository {
 
     // userIdが指定されている場合のみフィルタリング
     if (options?.userId) {
-      query = query.eq("created_by", options.userId);
+      query = query.eq("user_id", options.userId);
     }
 
     const { data, error } = await query
@@ -165,7 +165,7 @@ class PromptHistoryRepository {
 
     // ユーザーIDでフィルタリング（オプション）
     if (options?.userId) {
-      query = query.eq("created_by", options.userId);
+      query = query.eq("user_id", options.userId);
     }
 
     query = query
@@ -208,7 +208,7 @@ class PromptHistoryRepository {
     const { count, error } = await (supabase as any)
       .from("prompt_history")
       .select("*", { count: "exact", head: true })
-      .eq("created_by", userId)
+      .eq("user_id", userId)
       .is("deleted_at", null);
 
     if (error) {
