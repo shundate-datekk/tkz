@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
  * NextAuth.js 設定
  * Google OAuth認証を使用
  */
-export const authConfig: NextAuthConfig = {
+export const export const authConfig: NextAuthConfig = {
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
@@ -36,7 +36,6 @@ export const authConfig: NextAuthConfig = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // maxAge は動的に設定されます（jwt callbackで制御）
       },
     },
   },
@@ -51,15 +50,42 @@ export const authConfig: NextAuthConfig = {
           const supabase = await createClient();
 
           console.log("[NextAuth signIn] Creating/updating user in database");
-          console.log("[NextAuth signIn] User ID:", user.id);
           console.log("[NextAuth signIn] Email:", user.email);
+          console.log("[NextAuth signIn] Provider Account ID:", account.providerAccountId);
 
-          // usersテーブルにユーザーを作成/更新
-          const { data, error } = await (supabase as any)
+          // 既存のユーザーをemailで検索
+          const { data: existingUser } = await (supabase as any)
             .from("users")
-            .upsert(
-              {
-                id: user.id, // NextAuth.jsが生成したID
+            .select("id")
+            .eq("email", user.email)
+            .single();
+
+          if (existingUser) {
+            // 既存ユーザーを更新
+            const { error: updateError } = await (supabase as any)
+              .from("users")
+              .update({
+                display_name: user.name || "Anonymous",
+                email_verified: (profile as any)?.email_verified || false,
+                image: user.image,
+                provider: "google",
+                provider_account_id: account.providerAccountId,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existingUser.id);
+
+            if (updateError) {
+              console.error("[NextAuth signIn] Failed to update user:", updateError);
+            } else {
+              console.log("[NextAuth signIn] User updated successfully:", existingUser.id);
+              // トークンにユーザーIDを設定（jwtコールバックで使用）
+              user.id = existingUser.id;
+            }
+          } else {
+            // 新規ユーザーを作成
+            const { data: newUser, error: insertError } = await (supabase as any)
+              .from("users")
+              .insert({
                 email: user.email,
                 display_name: user.name || "Anonymous",
                 email_verified: (profile as any)?.email_verified || false,
@@ -68,21 +94,17 @@ export const authConfig: NextAuthConfig = {
                 provider_account_id: account.providerAccountId,
                 username: null,
                 password_hash: null,
-                updated_at: new Date().toISOString(),
-              },
-              {
-                onConflict: "id",
-              }
-            )
-            .select()
-            .single();
+              })
+              .select("id")
+              .single();
 
-          if (error) {
-            console.error("[NextAuth signIn] Failed to create/update user:", error);
-            // エラーが発生してもログインは継続（usersテーブルへの保存失敗は致命的ではない）
-            // ただし、外部キー制約があるため、実際にはツール作成時にエラーになる
-          } else {
-            console.log("[NextAuth signIn] User created/updated successfully:", data?.id);
+            if (insertError) {
+              console.error("[NextAuth signIn] Failed to create user:", insertError);
+            } else {
+              console.log("[NextAuth signIn] User created successfully:", newUser.id);
+              // トークンにユーザーIDを設定（jwtコールバックで使用）
+              user.id = newUser.id;
+            }
           }
         } catch (error) {
           console.error("[NextAuth signIn] Unexpected error:", error);
@@ -94,8 +116,7 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user, account }) {
       // 初回ログイン時: userオブジェクトからIDを取得
       if (user) {
-        // Google OAuthの場合、user.idはGoogle account IDになる
-        token.id = user.id || account?.providerAccountId;
+        token.id = user.id;
         token.email = user.email;
         token.name = user.name;
         token.picture = user.image;
@@ -113,4 +134,4 @@ export const authConfig: NextAuthConfig = {
       return session;
     },
   },
-};
+};;
